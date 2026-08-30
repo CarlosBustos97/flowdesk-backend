@@ -1,9 +1,45 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
-const permissions = [
+const ORGANIZATION = {
+  name: "Acme Corporation",
+  slug: "acme-corporation",
+  email: "admin@acme.test",
+  phone: "+34 600 000 000",
+  timezone: "Europe/Madrid",
+};
+
+const ROLES = [
+  {
+    name: "OWNER",
+    description: "Full access to the platform",
+    isGlobal: true,
+  },
+  {
+    name: "ADMIN",
+    description: "Administrative access to the organization",
+    isGlobal: false,
+  },
+  {
+    name: "MANAGER",
+    description: "Management access to projects, tasks and tickets",
+    isGlobal: false,
+  },
+  {
+    name: "AGENT",
+    description: "Support agent access to tickets",
+    isGlobal: false,
+  },
+  {
+    name: "USER",
+    description: "Basic application access",
+    isGlobal: true,
+  },
+];
+
+const PERMISSIONS = [
   // Users
   {
     code: "users.view",
@@ -14,60 +50,58 @@ const permissions = [
   {
     code: "users.create",
     name: "Create users",
-    description: "Create new users",
+    description: "Create organization users",
     module: "users",
   },
   {
     code: "users.update",
     name: "Update users",
-    description: "Update existing users",
+    description: "Update organization users",
     module: "users",
   },
   {
     code: "users.delete",
     name: "Delete users",
-    description: "Delete users",
+    description: "Delete organization users",
     module: "users",
   },
 
-  // Organizations
+  // Tickets
   {
-    code: "organizations.view",
-    name: "View organization",
-    description: "View organization information",
-    module: "organizations",
+    code: "tickets.view",
+    name: "View tickets",
+    description: "View tickets",
+    module: "tickets",
   },
   {
-    code: "organizations.update",
-    name: "Update organization",
-    description: "Update organization information",
-    module: "organizations",
-  },
-
-  // Customers
-  {
-    code: "customers.view",
-    name: "View customers",
-    description: "View customers",
-    module: "customers",
+    code: "tickets.create",
+    name: "Create tickets",
+    description: "Create tickets",
+    module: "tickets",
   },
   {
-    code: "customers.create",
-    name: "Create customers",
-    description: "Create new customers",
-    module: "customers",
+    code: "tickets.update",
+    name: "Update tickets",
+    description: "Update tickets",
+    module: "tickets",
   },
   {
-    code: "customers.update",
-    name: "Update customers",
-    description: "Update existing customers",
-    module: "customers",
+    code: "tickets.assign",
+    name: "Assign tickets",
+    description: "Assign tickets to agents",
+    module: "tickets",
   },
   {
-    code: "customers.delete",
-    name: "Delete customers",
-    description: "Delete customers",
-    module: "customers",
+    code: "tickets.resolve",
+    name: "Resolve tickets",
+    description: "Resolve tickets",
+    module: "tickets",
+  },
+  {
+    code: "tickets.close",
+    name: "Close tickets",
+    description: "Close tickets",
+    module: "tickets",
   },
 
   // Projects
@@ -80,13 +114,13 @@ const permissions = [
   {
     code: "projects.create",
     name: "Create projects",
-    description: "Create new projects",
+    description: "Create projects",
     module: "projects",
   },
   {
     code: "projects.update",
     name: "Update projects",
-    description: "Update existing projects",
+    description: "Update projects",
     module: "projects",
   },
   {
@@ -106,13 +140,13 @@ const permissions = [
   {
     code: "tasks.create",
     name: "Create tasks",
-    description: "Create new tasks",
+    description: "Create tasks",
     module: "tasks",
   },
   {
     code: "tasks.update",
     name: "Update tasks",
-    description: "Update existing tasks",
+    description: "Update tasks",
     module: "tasks",
   },
   {
@@ -121,346 +155,339 @@ const permissions = [
     description: "Assign tasks to users",
     module: "tasks",
   },
-  {
-    code: "tasks.delete",
-    name: "Delete tasks",
-    description: "Delete tasks",
-    module: "tasks",
-  },
-
-  // Tickets
-  {
-    code: "tickets.view",
-    name: "View tickets",
-    description: "View tickets",
-    module: "tickets",
-  },
-  {
-    code: "tickets.create",
-    name: "Create tickets",
-    description: "Create new tickets",
-    module: "tickets",
-  },
-  {
-    code: "tickets.update",
-    name: "Update tickets",
-    description: "Update existing tickets",
-    module: "tickets",
-  },
-  {
-    code: "tickets.assign",
-    name: "Assign tickets",
-    description: "Assign tickets to users",
-    module: "tickets",
-  },
-  {
-    code: "tickets.resolve",
-    name: "Resolve tickets",
-    description: "Resolve tickets",
-    module: "tickets",
-  },
-  {
-    code: "tickets.delete",
-    name: "Delete tickets",
-    description: "Delete tickets",
-    module: "tickets",
-  },
-
-  // Reports
-  {
-    code: "reports.view",
-    name: "View reports",
-    description: "View reports",
-    module: "reports",
-  },
-  {
-    code: "reports.create",
-    name: "Create reports",
-    description: "Generate reports",
-    module: "reports",
-  },
-
-  // Workflows
-  {
-    code: "workflows.view",
-    name: "View workflows",
-    description: "View workflows",
-    module: "workflows",
-  },
-  {
-    code: "workflows.create",
-    name: "Create workflows",
-    description: "Create workflows",
-    module: "workflows",
-  },
-  {
-    code: "workflows.update",
-    name: "Update workflows",
-    description: "Update workflows",
-    module: "workflows",
-  },
-  {
-    code: "workflows.delete",
-    name: "Delete workflows",
-    description: "Delete workflows",
-    module: "workflows",
-  },
 ];
 
-const roles = [
-  {
-    name: "OWNER",
-    description: "Organization owner with full access",
-  },
-  {
-    name: "ADMIN",
-    description: "Organization administrator",
-  },
-  {
-    name: "MANAGER",
-    description: "Manager with operational permissions",
-  },
-  {
-    name: "AGENT",
-    description: "Support agent responsible for tickets",
-  },
-  {
-    name: "USER",
-    description: "Standard organization user",
-  },
-];
+const ROLE_PERMISSIONS: Record<string, string[]> = {
+  OWNER: PERMISSIONS.map((permission) => permission.code),
 
-const rolePermissions: Record<string, string[]> = {
-  OWNER: permissions.map((permission) => permission.code),
-
-  ADMIN: permissions
-    .filter((permission) => permission.code !== "organizations.update")
-    .map((permission) => permission.code),
-
-  MANAGER: [
+  ADMIN: [
     "users.view",
-    "customers.view",
-    "customers.create",
-    "customers.update",
-    "projects.view",
-    "projects.create",
-    "projects.update",
-    "tasks.view",
-    "tasks.create",
-    "tasks.update",
-    "tasks.assign",
+    "users.create",
+    "users.update",
+    "users.delete",
+
     "tickets.view",
     "tickets.create",
     "tickets.update",
     "tickets.assign",
     "tickets.resolve",
-    "reports.view",
-    "reports.create",
-  ],
+    "tickets.close",
 
-  AGENT: [
-    "customers.view",
     "projects.view",
+    "projects.create",
+    "projects.update",
+    "projects.delete",
+
     "tasks.view",
     "tasks.create",
     "tasks.update",
+    "tasks.assign",
+  ],
+
+  MANAGER: [
+    "users.view",
+
     "tickets.view",
     "tickets.create",
     "tickets.update",
+    "tickets.assign",
     "tickets.resolve",
+    "tickets.close",
+
+    "projects.view",
+    "projects.create",
+    "projects.update",
+
+    "tasks.view",
+    "tasks.create",
+    "tasks.update",
+    "tasks.assign",
   ],
 
-  USER: [
-    "customers.view",
-    "projects.view",
-    "tasks.view",
+  AGENT: [
     "tickets.view",
     "tickets.create",
+    "tickets.update",
+    "tickets.assign",
+    "tickets.resolve",
+
+    "projects.view",
+
+    "tasks.view",
+    "tasks.create",
+    "tasks.update",
   ],
+
+  USER: ["tickets.view", "tickets.create", "projects.view", "tasks.view"],
 };
 
+const USERS = [
+  {
+    name: "Acme Admin",
+    email: "admin@acme.test",
+    password: "Admin123!",
+    role: "OWNER",
+  },
+  {
+    name: "Acme Manager",
+    email: "manager@acme.test",
+    password: "Manager123!",
+    role: "MANAGER",
+  },
+  {
+    name: "Acme Agent",
+    email: "agent@acme.test",
+    password: "Agent123!",
+    role: "AGENT",
+  },
+];
+
 async function main() {
-  console.log("🌱 Starting FlowDesk seed...");
+  console.log("🌱 Starting database seed...");
 
-  const password = process.env.SEED_DEFAULT_PASSWORD ?? "FlowDesk123!";
-
-  const passwordHash = await bcrypt.hash(password, 12);
-
-  /*
-   * Organization
-   */
-  const organization = await prisma.organization.upsert({
-    where: {
-      slug: "acme-corporation",
-    },
-    update: {},
-    create: {
-      name: "Acme Corporation",
-      slug: "acme-corporation",
-      email: "admin@acme.test",
-      phone: "+1 555 0100",
-      timezone: "UTC",
-    },
-  });
-
-  console.log(`✓ Organization: ${organization.name}`);
-
-  /*
-   * Permissions
-   */
-  const permissionMap = new Map<string, string>();
-
-  for (const permission of permissions) {
-    const record = await prisma.permission.upsert({
+  await prisma.$transaction(async (tx) => {
+    /*
+     * 1. Organization
+     */
+    const organization = await tx.organization.upsert({
       where: {
-        code: permission.code,
+        slug: ORGANIZATION.slug,
       },
       update: {
-        name: permission.name,
-        description: permission.description,
-        module: permission.module,
-      },
-      create: permission,
-    });
-
-    permissionMap.set(record.code, record.id);
-  }
-
-  console.log(`✓ Permissions: ${permissions.length}`);
-
-  /*
-   * Roles
-   */
-  const roleMap = new Map<string, string>();
-
-  for (const roleData of roles) {
-    const role = await prisma.role.upsert({
-      where: {
-        organizationId_name: {
-          organizationId: organization.id,
-          name: roleData.name,
-        },
-      },
-      update: {
-        description: roleData.description,
-        isSystem: true,
+        name: ORGANIZATION.name,
+        email: ORGANIZATION.email,
+        phone: ORGANIZATION.phone,
+        timezone: ORGANIZATION.timezone,
+        status: "ACTIVE",
       },
       create: {
-        organizationId: organization.id,
-        name: roleData.name,
-        description: roleData.description,
-        isSystem: true,
+        name: ORGANIZATION.name,
+        slug: ORGANIZATION.slug,
+        email: ORGANIZATION.email,
+        phone: ORGANIZATION.phone,
+        timezone: ORGANIZATION.timezone,
+        status: "ACTIVE",
       },
     });
 
-    roleMap.set(role.name, role.id);
-  }
+    console.log(`✓ Organization: ${organization.name}`);
 
-  console.log(`✓ Roles: ${roles.length}`);
+    /*
+     * 2. Permissions
+     */
+    const permissionMap = new Map<
+      string,
+      {
+        id: string;
+        code: string;
+      }
+    >();
 
-  /*
-   * Role permissions
-   */
-  for (const [roleName, permissionCodes] of Object.entries(rolePermissions)) {
-    const roleId = roleMap.get(roleName);
+    for (const permission of PERMISSIONS) {
+      const record = await tx.permission.upsert({
+        where: {
+          code: permission.code,
+        },
+        update: {
+          name: permission.name,
+          description: permission.description,
+          module: permission.module,
+        },
+        create: permission,
+      });
 
-    if (!roleId) {
-      throw new Error(`Role not found: ${roleName}`);
+      permissionMap.set(record.code, {
+        id: record.id,
+        code: record.code,
+      });
     }
 
-    for (const permissionCode of permissionCodes) {
-      const permissionId = permissionMap.get(permissionCode);
+    console.log(`✓ Permissions: ${PERMISSIONS.length}`);
 
-      if (!permissionId) {
-        throw new Error(`Permission not found: ${permissionCode}`);
+    /*
+     * 3. Roles
+     *
+     * OWNER and USER are global roles.
+     * ADMIN, MANAGER and AGENT belong to the organization.
+     */
+    const roleMap = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+      }
+    >();
+
+    for (const role of ROLES) {
+      let record;
+
+      if (role.isGlobal) {
+        /*
+         * Global role:
+         * organizationId = null
+         *
+         * We cannot use organizationId_name here for a reliable
+         * upsert because organizationId is nullable.
+         */
+        record = await tx.role.findFirst({
+          where: {
+            organizationId: null,
+            name: role.name,
+          },
+        });
+
+        if (record) {
+          record = await tx.role.update({
+            where: {
+              id: record.id,
+            },
+            data: {
+              description: role.description,
+              isSystem: true,
+              organizationId: null,
+            },
+          });
+        } else {
+          record = await tx.role.create({
+            data: {
+              organizationId: null,
+              name: role.name,
+              description: role.description,
+              isSystem: true,
+            },
+          });
+        }
+      } else {
+        /*
+         * Organization role:
+         * organizationId = organization.id
+         */
+        record = await tx.role.upsert({
+          where: {
+            organizationId_name: {
+              organizationId: organization.id,
+              name: role.name,
+            },
+          },
+          update: {
+            description: role.description,
+            isSystem: true,
+          },
+          create: {
+            organizationId: organization.id,
+            name: role.name,
+            description: role.description,
+            isSystem: true,
+          },
+        });
       }
 
-      await prisma.rolePermission.upsert({
+      roleMap.set(record.name, {
+        id: record.id,
+        name: record.name,
+      });
+
+      console.log(
+        `✓ Role: ${record.name} ${
+          role.isGlobal ? "(global)" : "(organization)"
+        }`,
+      );
+    }
+
+    /*
+     * 4. Role permissions
+     */
+    for (const [roleName, permissionCodes] of Object.entries(
+      ROLE_PERMISSIONS,
+    )) {
+      const role = roleMap.get(roleName);
+
+      if (!role) {
+        throw new Error(`Role not found: ${roleName}`);
+      }
+
+      for (const permissionCode of permissionCodes) {
+        const permission = permissionMap.get(permissionCode);
+
+        if (!permission) {
+          throw new Error(`Permission not found: ${permissionCode}`);
+        }
+
+        await tx.rolePermission.upsert({
+          where: {
+            roleId_permissionId: {
+              roleId: role.id,
+              permissionId: permission.id,
+            },
+          },
+          update: {},
+          create: {
+            roleId: role.id,
+            permissionId: permission.id,
+          },
+        });
+      }
+    }
+
+    console.log("✓ Role permissions assigned");
+
+    /*
+     * 5. Users
+     */
+    for (const user of USERS) {
+      const passwordHash = await bcrypt.hash(user.password, 12);
+
+      const record = await tx.user.upsert({
         where: {
-          roleId_permissionId: {
-            roleId,
-            permissionId,
+          organizationId_email: {
+            organizationId: organization.id,
+            email: user.email,
+          },
+        },
+        update: {
+          name: user.name,
+          passwordHash,
+          status: "ACTIVE",
+        },
+        create: {
+          organizationId: organization.id,
+          name: user.name,
+          email: user.email,
+          passwordHash,
+          status: "ACTIVE",
+        },
+      });
+
+      console.log(`✓ User: ${record.email}`);
+
+      /*
+       * 6. User role
+       */
+      const role = roleMap.get(user.role);
+
+      if (!role) {
+        throw new Error(`Role not found: ${user.role}`);
+      }
+
+      await tx.userRole.upsert({
+        where: {
+          userId_roleId: {
+            userId: record.id,
+            roleId: role.id,
           },
         },
         update: {},
         create: {
-          roleId,
-          permissionId,
+          userId: record.id,
+          roleId: role.id,
         },
       });
     }
-  }
 
-  console.log("✓ Role permissions configured");
+    console.log("✓ User roles assigned");
+  });
 
-  /*
-   * Users
-   */
-  const users = [
-    {
-      name: "Acme Administrator",
-      email: "admin@acme.test",
-      role: "OWNER",
-    },
-    {
-      name: "Acme Manager",
-      email: "manager@acme.test",
-      role: "MANAGER",
-    },
-    {
-      name: "Acme Agent",
-      email: "agent@acme.test",
-      role: "AGENT",
-    },
-  ];
-
-  for (const userData of users) {
-    const user = await prisma.user.upsert({
-      where: {
-        organizationId_email: {
-          organizationId: organization.id,
-          email: userData.email,
-        },
-      },
-      update: {
-        name: userData.name,
-        passwordHash,
-        status: "ACTIVE",
-      },
-      create: {
-        organizationId: organization.id,
-        name: userData.name,
-        email: userData.email,
-        passwordHash,
-        status: "ACTIVE",
-      },
-    });
-
-    const roleId = roleMap.get(userData.role);
-
-    if (!roleId) {
-      throw new Error(`Role not found: ${userData.role}`);
-    }
-
-    await prisma.userRole.upsert({
-      where: {
-        userId_roleId: {
-          userId: user.id,
-          roleId,
-        },
-      },
-      update: {},
-      create: {
-        userId: user.id,
-        roleId,
-      },
-    });
-
-    console.log(`✓ User: ${user.email} → ${userData.role}`);
-  }
-
-  console.log("");
-  console.log("🌱 FlowDesk seed completed successfully.");
+  console.log("🌱 Database seed completed successfully.");
 }
 
 main()
