@@ -4,6 +4,7 @@ import { Redis } from "ioredis";
 import crypto from "node:crypto";
 import type { LoginResponse } from "./auth.types.js";
 import { AppError } from "../../common/errors/app-error.js";
+import { UserStatus } from "../../generated/prisma/edge.js";
 
 export class AuthService {
   constructor(
@@ -17,7 +18,10 @@ export class AuthService {
     });
 
     if (!user) throw new AppError(401, "Invalid credentials");
-
+    
+    if (user.status === UserStatus.INACTIVE) {
+      throw new AppError(401, "Invalid credentials");
+    }
     const passwordMatch = await bcrypt.compare(password, user.passwordHash);
     if (!passwordMatch) throw new AppError(401, "Invalid credentials");
 

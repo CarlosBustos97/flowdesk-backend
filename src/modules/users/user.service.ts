@@ -469,31 +469,41 @@ export class UserService {
     /*
      * 5. Desactivación lógica.
      */
-    const user = await this.prisma.user.update({
-      where: {
-        id: existingUser.id,
-      },
-      data: {
-        status: UserStatus.INACTIVE,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        status: true,
-        organizationId: true,
-        roles: {
-          select: {
-            role: {
-              select: {
-                name: true,
+    const user = await this.prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({
+        where: {
+          id: existingUser.id,
+        },
+        data: {
+          status: UserStatus.INACTIVE,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          status: true,
+          organizationId: true,
+          roles: {
+            select: {
+              role: {
+                select: {
+                  name: true,
+                },
               },
             },
           },
+          createdAt: true,
+          updatedAt: true,
         },
-        createdAt: true,
-        updatedAt: true,
-      },
+      });
+
+      await tx.session.deleteMany({
+        where: {
+          userId: existingUser.id,
+        },
+      });
+
+      return updatedUser;
     });
 
     return user;
