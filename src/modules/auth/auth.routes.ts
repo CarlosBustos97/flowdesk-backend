@@ -28,19 +28,4 @@ export async function authRoutes(app: FastifyInstance) {
     { preHandler: authGuard },
     authController.logout.bind(authController),
   );
-
-  app.get(
-    "/users",
-    {
-      preHandler: [authGuard, requirePermission(PERMISSIONS.USERS_VIEW)],
-    },
-    async () => {
-      return {
-        success: true,
-        data: {
-          message: "You can view users",
-        },
-      };
-    },
-  );
 }

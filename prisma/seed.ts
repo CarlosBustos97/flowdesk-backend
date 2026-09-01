@@ -87,7 +87,7 @@ const PERMISSIONS = [
   },
   {
     code: "tickets.assign",
-    name: "Assign tickets",
+    name: "Assign tickets to agents",
     description: "Assign tickets to agents",
     module: "tickets",
   },
@@ -165,19 +165,16 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "users.create",
     "users.update",
     "users.delete",
-
     "tickets.view",
     "tickets.create",
     "tickets.update",
     "tickets.assign",
     "tickets.resolve",
     "tickets.close",
-
     "projects.view",
     "projects.create",
     "projects.update",
     "projects.delete",
-
     "tasks.view",
     "tasks.create",
     "tasks.update",
@@ -186,18 +183,15 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
 
   MANAGER: [
     "users.view",
-
     "tickets.view",
     "tickets.create",
     "tickets.update",
     "tickets.assign",
     "tickets.resolve",
     "tickets.close",
-
     "projects.view",
     "projects.create",
     "projects.update",
-
     "tasks.view",
     "tasks.create",
     "tasks.update",
@@ -210,9 +204,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "tickets.update",
     "tickets.assign",
     "tickets.resolve",
-
     "projects.view",
-
     "tasks.view",
     "tasks.create",
     "tasks.update",
@@ -321,17 +313,14 @@ async function main() {
     for (const role of ROLES) {
       let record;
 
-      if (role.isGlobal) {
-        /*
-         * Global role:
-         * organizationId = null
+      /*
+         * Global role
          *
-         * We cannot use organizationId_name here for a reliable
-         * upsert because organizationId is nullable.
+         * organizationId = role.isGlobal ? null : organization.id
+         * isGlobal = role.isGlobal
          */
         record = await tx.role.findFirst({
           where: {
-            organizationId: null,
             name: role.name,
           },
         });
@@ -343,44 +332,20 @@ async function main() {
             },
             data: {
               description: role.description,
-              isSystem: true,
-              organizationId: null,
+              isGlobal: role.isGlobal,
+              organizationId: role.isGlobal ? null : organization.id,
             },
           });
         } else {
           record = await tx.role.create({
             data: {
-              organizationId: null,
+              organizationId: role.isGlobal ? null : organization.id,
               name: role.name,
               description: role.description,
-              isSystem: true,
+              isGlobal: role.isGlobal,
             },
           });
         }
-      } else {
-        /*
-         * Organization role:
-         * organizationId = organization.id
-         */
-        record = await tx.role.upsert({
-          where: {
-            organizationId_name: {
-              organizationId: organization.id,
-              name: role.name,
-            },
-          },
-          update: {
-            description: role.description,
-            isSystem: true,
-          },
-          create: {
-            organizationId: organization.id,
-            name: role.name,
-            description: role.description,
-            isSystem: true,
-          },
-        });
-      }
 
       roleMap.set(record.name, {
         id: record.id,
