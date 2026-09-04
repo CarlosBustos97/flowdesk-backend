@@ -40,8 +40,10 @@ export class ProjectService {
       ...(query.priority ? { priority: query.priority } : {}),
       ...(query.status ? { status: query.status } : {}),
       ...(query.customerId ? { customerId: query.customerId } : {}),
-      ...(query.startDate ? { startDate: new Date(query.startDate) } : {}),
-      ...(query.dueDate ? { dueDate: new Date(query.dueDate) } : {}),
+      ...(query.startDate
+        ? { startDate: { gte: new Date(query.startDate) } }
+        : {}),
+      ...(query.dueDate ? { dueDate: { lte: new Date(query.dueDate) } } : {}),
     };
 
     const [projects, total] = await this.prisma.$transaction([
@@ -66,7 +68,7 @@ export class ProjectService {
       }),
       this.prisma.project.count({ where }),
     ]);
-    
+
     return {
       projects,
       pagination: {
@@ -159,7 +161,7 @@ export class ProjectService {
     const existingProject = await this.prisma.project.findFirst({
       where: {
         organizationId: data.organizationId,
-        name: { contains: data.name, mode: "insensitive" as const },
+        name: { equals: data.name, mode: "insensitive" as const },
       },
     });
 
@@ -238,7 +240,7 @@ export class ProjectService {
       const customer = await this.prisma.customer.findFirst({
         where: {
           id: data.customerId,
-          organizationId: existingProject.organizationId
+          organizationId: existingProject.organizationId,
         },
       });
 
@@ -251,7 +253,7 @@ export class ProjectService {
     if (data.name !== undefined) {
       const existingProjectName = await this.prisma.project.findFirst({
         where: {
-          name: { contains: data.name, mode: "insensitive" as const },
+          name: { equals: data.name, mode: "insensitive" as const },
           organizationId: existingProject.organizationId,
           NOT: { id: projectId },
         },
@@ -291,20 +293,28 @@ export class ProjectService {
           "The start date cannot exceed the project's due date.",
         );
 
-    /** 
+    /**
      * 7. Actualizar los datos del proyecto
-    */
-   const project = await this.prisma.project.update({
-    where: {id: projectId},
-    data: {
-        ...(data.customerId !== undefined ? { customerId: data.customerId } : {}),
+     */
+    const project = await this.prisma.project.update({
+      where: { id: projectId },
+      data: {
+        ...(data.customerId !== undefined
+          ? { customerId: data.customerId }
+          : {}),
         ...(data.name !== undefined ? { name: data.name } : {}),
-        ...(data.description !== undefined ? { description: data.description } : {}),
+        ...(data.description !== undefined
+          ? { description: data.description }
+          : {}),
         ...(data.priority !== undefined ? { priority: data.priority } : {}),
-        ...(data.startDate !== undefined ? { startDate: new Date(data.startDate) } : {}),
-        ...(data.dueDate !== undefined ? { dueDate: new Date(data.dueDate) } : {}),
-    },
-    select: {
+        ...(data.startDate !== undefined
+          ? { startDate: new Date(data.startDate) }
+          : {}),
+        ...(data.dueDate !== undefined
+          ? { dueDate: new Date(data.dueDate) }
+          : {}),
+      },
+      select: {
         id: true,
         name: true,
         description: true,
@@ -317,9 +327,9 @@ export class ProjectService {
         customer: { select: { id: true, name: true, email: true } },
         createdBy: { select: { id: true, name: true } },
       },
-   });
+    });
 
-   return project;
+    return project;
   }
 
   async activate(
@@ -327,52 +337,13 @@ export class ProjectService {
     requesterUserId: string,
     requesterOrganizationId: string,
   ) {
-    const scope = await this.authorizationService.getScope(requesterUserId);
-
-    /**
-     * 1. Verificar que el proyecto exista
-     */
-    const existingProject = await this.prisma.project.findFirst({
-      where: {
-        id: projectId,
-        ...(scope === AUTH_SCOPES.ORGANIZATION
-          ? { organizationId: requesterOrganizationId }
-          : {}),
-      },
-    });
-
-    if (!existingProject) throw new AppError(404, "Project not found");
-
-    /**
-     * 2. Verificar el estado del proyecto (On hold o planned)
-     */
-    const status: ProjectStatus[] = [
-      ProjectStatus.PLANNED,
-      ProjectStatus.ON_HOLD,
-    ];
-
-    if (!status.includes(existingProject.status))
-      throw new AppError(409, "Invalid project status transition");
-
-    const project = await this.prisma.project.update({
-      where: { id: projectId },
-      data: { status: ProjectStatus.ACTIVE },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        startDate: true,
-        dueDate: true,
-        status: true,
-        priority: true,
-        createdAt: true,
-        organization: { select: { id: true, name: true, slug: true } },
-        customer: { select: { id: true, name: true, email: true } },
-        createdBy: { select: { id: true, name: true } },
-      },
-    });
-
-    return project;
+    return await this.updateProjectStatus(
+      projectId,
+      ProjectStatus.ACTIVE,
+      [ProjectStatus.PLANNED, ProjectStatus.ON_HOLD],
+      requesterUserId,
+      requesterOrganizationId,
+    );
   }
 
   async hold(
@@ -380,47 +351,13 @@ export class ProjectService {
     requesterUserId: string,
     requesterOrganizationId: string,
   ) {
-    const scope = await this.authorizationService.getScope(requesterUserId);
-
-    /**
-     * 1. Verificar que el proyecto exista
-     */
-    const existingProject = await this.prisma.project.findFirst({
-      where: {
-        id: projectId,
-        ...(scope === AUTH_SCOPES.ORGANIZATION
-          ? { organizationId: requesterOrganizationId }
-          : {}),
-      },
-    });
-
-    if (!existingProject) throw new AppError(404, "Project not found");
-
-    /**
-     * 2. Verificar el estado del proyecto (Active)
-     */
-    if (existingProject.status !== ProjectStatus.ACTIVE)
-      throw new AppError(409, "Invalid project status transition");
-
-    const project = await this.prisma.project.update({
-      where: { id: projectId },
-      data: { status: ProjectStatus.ON_HOLD },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        startDate: true,
-        dueDate: true,
-        status: true,
-        priority: true,
-        createdAt: true,
-        organization: { select: { id: true, name: true, slug: true } },
-        customer: { select: { id: true, name: true, email: true } },
-        createdBy: { select: { id: true, name: true } },
-      },
-    });
-
-    return project;
+    return await this.updateProjectStatus(
+      projectId,
+      ProjectStatus.ON_HOLD,
+      [ProjectStatus.ACTIVE],
+      requesterUserId,
+      requesterOrganizationId,
+    );
   }
 
   async complete(
@@ -428,56 +365,33 @@ export class ProjectService {
     requesterUserId: string,
     requesterOrganizationId: string,
   ) {
-    const scope = await this.authorizationService.getScope(requesterUserId);
-
-    /**
-     * 1. Verificar que el proyecto exista
-     */
-    const existingProject = await this.prisma.project.findFirst({
-      where: {
-        id: projectId,
-        ...(scope === AUTH_SCOPES.ORGANIZATION
-          ? { organizationId: requesterOrganizationId }
-          : {}),
-      },
-    });
-
-    if (!existingProject) throw new AppError(404, "Project not found");
-
-    /**
-     * 2. Verificar el estado del proyecto (on hold o active)
-     */
-    const status: ProjectStatus[] = [
-      ProjectStatus.ACTIVE,
-      ProjectStatus.ON_HOLD,
-    ];
-
-    if (!status.includes(existingProject.status))
-      throw new AppError(409, "Invalid project status transition");
-
-    const project = await this.prisma.project.update({
-      where: { id: projectId },
-      data: { status: ProjectStatus.COMPLETED },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        startDate: true,
-        dueDate: true,
-        status: true,
-        priority: true,
-        createdAt: true,
-        organization: { select: { id: true, name: true, slug: true } },
-        customer: { select: { id: true, name: true, email: true } },
-        createdBy: { select: { id: true, name: true } },
-      },
-    });
-
-    return project;
+    return await this.updateProjectStatus(
+      projectId,
+      ProjectStatus.COMPLETED,
+      [ProjectStatus.ACTIVE, ProjectStatus.ON_HOLD],
+      requesterUserId,
+      requesterOrganizationId,
+    );
   }
 
   async cancel(
     projectId: string,
+    requesterUserId: string,
+    requesterOrganizationId: string,
+  ) {
+    return await this.updateProjectStatus(
+      projectId,
+      ProjectStatus.CANCELLED,
+      [ProjectStatus.PLANNED, ProjectStatus.ACTIVE, ProjectStatus.ON_HOLD],
+      requesterUserId,
+      requesterOrganizationId,
+    );
+  }
+
+  private async updateProjectStatus(
+    projectId: string,
+    status: ProjectStatus,
+    allowedStatuses: ProjectStatus[],
     requesterUserId: string,
     requesterOrganizationId: string,
   ) {
@@ -498,20 +412,14 @@ export class ProjectService {
     if (!existingProject) throw new AppError(404, "Project not found");
 
     /**
-     * 2. Verificar el estado del proyecto (on hold o active)
+     * 2. Verificar el estado del proyecto allowedStatuses
      */
-    const status: ProjectStatus[] = [
-      ProjectStatus.PLANNED,
-      ProjectStatus.ACTIVE,
-      ProjectStatus.ON_HOLD,
-    ];
-
-    if (!status.includes(existingProject.status))
+    if (!allowedStatuses.includes(existingProject.status))
       throw new AppError(409, "Invalid project status transition");
 
     const project = await this.prisma.project.update({
       where: { id: projectId },
-      data: { status: ProjectStatus.CANCELLED },
+      data: { status: status },
       select: {
         id: true,
         name: true,
