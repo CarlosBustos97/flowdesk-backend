@@ -71,7 +71,16 @@ export class CustomerService {
       }),
       this.prisma.customer.count({ where }),
     ]);
-    return { customers, total };
+
+    return {
+      customers,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findById(

@@ -74,7 +74,7 @@ export async function customerRoutes(app: FastifyInstance) {
     app.patch<{ Params: CustomerShowParams }>(
         "/customers/:id/enable",
         {
-            schema: customerUpdateSchema,
+            schema: customerShowSchema,
             preHandler: [authGuard, requirePermission(PERMISSIONS.CUSTOMERS_UPDATE)],
         },
         customerController.enable.bind(customerController),
