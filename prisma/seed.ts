@@ -92,6 +92,32 @@ const PERMISSIONS = [
     module: "tickets",
   },
 
+  // SLA policy
+  {
+    code: "sla_policies.view",
+    name: "View SLA policy",
+    description: "View SLA policy",
+    module: "tickets",
+  },
+  {
+    code: "sla_policies.create",
+    name: "Create SLA policy",
+    description: "Create SLA policy",
+    module: "tickets",
+  },
+  {
+    code: "sla_policies.update",
+    name: "Update SLA policy",
+    description: "Update SLA policy",
+    module: "tickets",
+  },
+  {
+    code: "sla_policies.delete",
+    name: "Delete SLA policy",
+    description: "Delete SLA policy",
+    module: "tickets",
+  },
+
   // Tickets
   {
     code: "tickets.view",
@@ -209,6 +235,10 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "ticket_categories.create",
     "ticket_categories.update",
     "ticket_categories.delete",
+    "sla_policies.view",
+    "sla_policies.create",
+    "sla_policies.update",
+    "sla_policies.delete",
   ],
 
   MANAGER: [
@@ -230,6 +260,10 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "ticket_categories.create",
     "ticket_categories.update",
     "ticket_categories.delete",
+    "sla_policies.view",
+    "sla_policies.create",
+    "sla_policies.update",
+    "sla_policies.delete",
   ],
 
   AGENT: [

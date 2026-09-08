@@ -36,6 +36,11 @@ export const PERMISSIONS = {
   TICKET_CATEGORIES_CREATE: "ticket_categories.create",
   TICKET_CATEGORIES_UPDATE: "ticket_categories.update",
   TICKET_CATEGORIES_DELETE: "ticket_categories.delete",
+
+  SLA_POLICIES_VIEW: "sla_policies.view",
+  SLA_POLICIES_CREATE: "sla_policies.create",
+  SLA_POLICIES_UPDATE: "sla_policies.update",
+  SLA_POLICIES_DELETE: "sla_policies.delete",
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
