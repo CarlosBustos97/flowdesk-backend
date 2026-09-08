@@ -35,7 +35,7 @@ const ROLES = [
   {
     name: "USER",
     description: "Basic application access",
-    isGlobal: true,
+    isGlobal: false,
   },
 ];
 
@@ -64,6 +64,32 @@ const PERMISSIONS = [
     name: "Delete users",
     description: "Delete organization users",
     module: "users",
+  },
+
+  // Tickets Categories
+  {
+    code: "ticket_categories.view",
+    name: "View ticket categories",
+    description: "View ticket categories",
+    module: "tickets",
+  },
+  {
+    code: "ticket_categories.create",
+    name: "Create ticket categories",
+    description: "Create ticket categories",
+    module: "tickets",
+  },
+  {
+    code: "ticket_categories.update",
+    name: "Update ticket categories",
+    description: "Update ticket categories",
+    module: "tickets",
+  },
+  {
+    code: "ticket_categories.delete",
+    name: "Delete ticket categories",
+    description: "Delete ticket categories",
+    module: "tickets",
   },
 
   // Tickets
@@ -179,6 +205,10 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "tasks.create",
     "tasks.update",
     "tasks.assign",
+    "ticket_categories.view",
+    "ticket_categories.create",
+    "ticket_categories.update",
+    "ticket_categories.delete",
   ],
 
   MANAGER: [
@@ -196,13 +226,16 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "tasks.create",
     "tasks.update",
     "tasks.assign",
+    "ticket_categories.view",
+    "ticket_categories.create",
+    "ticket_categories.update",
+    "ticket_categories.delete",
   ],
 
   AGENT: [
     "tickets.view",
     "tickets.create",
     "tickets.update",
-    "tickets.assign",
     "tickets.resolve",
     "projects.view",
     "tasks.view",

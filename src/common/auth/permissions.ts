@@ -31,6 +31,11 @@ export const PERMISSIONS = {
   ROLES_CREATE: "roles.create",
   ROLES_UPDATE: "roles.update",
   ROLES_DELETE: "roles.delete",
+
+  TICKET_CATEGORIES_VIEW: "ticket_categories.view",
+  TICKET_CATEGORIES_CREATE: "ticket_categories.create",
+  TICKET_CATEGORIES_UPDATE: "ticket_categories.update",
+  TICKET_CATEGORIES_DELETE: "ticket_categories.delete",
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
