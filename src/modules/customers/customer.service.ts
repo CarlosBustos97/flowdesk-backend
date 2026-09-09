@@ -100,6 +100,7 @@ export class CustomerService {
     const customer = await this.prisma.customer.findFirst({
       where,
       select: {
+        id: true,
         name: true,
         email: true,
         phone: true,
@@ -178,6 +179,7 @@ export class CustomerService {
         organizationId: organizationId,
       },
       select: {
+        id: true,
         name: true,
         email: true,
         phone: true,
@@ -249,6 +251,7 @@ export class CustomerService {
         ...(data.notes !== undefined ? { notes: data.notes } : {}),
       },
       select: {
+        id: true,
         name: true,
         email: true,
         phone: true,
@@ -295,6 +298,7 @@ export class CustomerService {
       where: { id: customerId },
       data: { status: CustomerStatus.INACTIVE, deletedAt: new Date() },
       select: {
+        id: true,
         name: true,
         email: true,
         phone: true,
@@ -341,6 +345,7 @@ export class CustomerService {
       where: { id: customerId },
       data: { status: CustomerStatus.ACTIVE, deletedAt: null },
       select: {
+        id: true,
         name: true,
         email: true,
         phone: true,

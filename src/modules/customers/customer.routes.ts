@@ -62,10 +62,10 @@ export async function customerRoutes(app: FastifyInstance) {
         customerController.update.bind(customerController),
     );
 
-    app.delete<{ Params: CustomerShowParams }>(
-        "/customers/:id",
+    app.patch<{ Params: CustomerShowParams }>(
+        "/customers/:id/deactivate",
         {
-            schema: customerUpdateSchema,
+            schema: customerShowSchema,
             preHandler: [authGuard, requirePermission(PERMISSIONS.CUSTOMERS_DELETE)],
         },
         customerController.disable.bind(customerController),

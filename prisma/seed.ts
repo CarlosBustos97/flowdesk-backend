@@ -66,6 +66,32 @@ const PERMISSIONS = [
     module: "users",
   },
 
+  // Customers
+  {
+    code: "customers.view",
+    name: "View customers",
+    description: "View customers",
+    module: "customers",
+  },
+  {
+    code: "customers.create",
+    name: "Create customers",
+    description: "Create customers",
+    module: "customers",
+  },
+  {
+    code: "customers.update",
+    name: "Update customers",
+    description: "Update customers",
+    module: "customers",
+  },
+  {
+    code: "customers.delete",
+    name: "Delete customers",
+    description: "Delete customers",
+    module: "customers",
+  },
+
   // Tickets Categories
   {
     code: "ticket_categories.view",
