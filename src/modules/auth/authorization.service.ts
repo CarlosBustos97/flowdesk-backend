@@ -220,4 +220,38 @@ export default class AuthorizationService {
 
     return false;
   }
+
+  async canCreateInternalComment(
+    userId: string,
+    organizationId: string,
+  ): Promise<boolean> {
+    const roles = await this.prisma.role.findMany({
+      where: {
+        users: {
+          some: {
+            userId,
+          },
+        },
+        OR: [
+          {
+            name: "OWNER",
+            isGlobal: true,
+            organizationId: null,
+          },
+          {
+            name: {
+              in: ["ADMIN", "MANAGER", "AGENT"],
+            },
+            isGlobal: false,
+            organizationId,
+          },
+        ],
+      },
+      select: {
+        name: true,
+      },
+    });
+
+    return roles.length > 0;
+  }
 }

@@ -233,6 +233,32 @@ const PERMISSIONS = [
     description: "Assign tasks to users",
     module: "tasks",
   },
+
+  // Comments
+  {
+    code: "comments.view",
+    name: "View comments",
+    description: "View comments",
+    module: "tickets",
+  },
+  {
+    code: "comments.create",
+    name: "Create comments",
+    description: "Create comments",
+    module: "tickets",
+  },
+  {
+    code: "comments.update",
+    name: "Update comments",
+    description: "Update comments",
+    module: "tickets",
+  },
+  {
+    code: "comments.delete",
+    name: "Delete comments",
+    description: "Delete comments",
+    module: "tickets",
+  },
 ];
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -265,6 +291,10 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "sla_policies.create",
     "sla_policies.update",
     "sla_policies.delete",
+    "comments.view",
+    "comments.create",
+    "comments.update",
+    "comments.delete",
   ],
 
   MANAGER: [
@@ -290,6 +320,10 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "sla_policies.create",
     "sla_policies.update",
     "sla_policies.delete",
+    "comments.view",
+    "comments.create",
+    "comments.update",
+    "comments.delete",
   ],
 
   AGENT: [
@@ -301,9 +335,13 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "tasks.view",
     "tasks.create",
     "tasks.update",
+    "comments.view",
+    "comments.create",
+    "comments.update",
+    "comments.delete",
   ],
 
-  USER: ["tickets.view", "tickets.create", "projects.view", "tasks.view"],
+  USER: ["tickets.view", "tickets.create", "projects.view", "tasks.view", "comments.view", "comments.create"],
 };
 
 const USERS = [

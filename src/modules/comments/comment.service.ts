@@ -1,0 +1,326 @@
+import { TicketStatus, type PrismaClient } from "@prisma/client";
+import type AuthorizationService from "../auth/authorization.service.js";
+import type {
+  CommentCreateBody,
+  CommentCreateParams,
+  CommentListParams,
+  CommentListQuery,
+  CommentUpdateBody,
+} from "./comment.types.js";
+import { AUTH_SCOPES } from "../../common/auth/auth-scope.js";
+import { AppError } from "../../common/errors/app-error.js";
+
+export class CommentService {
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly authorizationService: AuthorizationService,
+  ) {}
+
+  async create(
+    ticketId: string,
+    data: CommentCreateBody,
+    requesterUserId: string,
+    requesterOrganizationId: string,
+  ) {
+    const scope = await this.authorizationService.getScope(requesterUserId);
+
+    /**
+     * 1. Veririfcar que el ticket exista
+     */
+    const ticket = await this.prisma.ticket.findFirst({
+      where: {
+        id: ticketId,
+        ...(scope === AUTH_SCOPES.ORGANIZATION
+          ? { organizationId: requesterOrganizationId }
+          : {}),
+      },
+    });
+
+    if (!ticket) throw new AppError(404, "Ticket not found");
+
+    /**
+     * 2. Verificar que el ticket no este cerrado
+     */
+    if (ticket.status === TicketStatus.CLOSED)
+      throw new AppError(
+        409,
+        "The ticket is closed and cannot receive new comments",
+      );
+
+    /**
+     * 3. Verificar si el comentario es interno y el usuario tiene permiso par hacerlo
+     */
+    if (
+      data.isInternal &&
+      !(await this.authorizationService.canCreateInternalComment(
+        requesterUserId,
+        ticket.organizationId,
+      ))
+    )
+      throw new AppError(
+        403,
+        "The user does not have permission to post an internal comment",
+      );
+
+    /**
+     * 4. Crear el comentario
+     */
+    const comment = await this.prisma.comment.create({
+      data: {
+        organizationId: ticket.organizationId,
+        ticketId: ticket.id,
+        userId: requesterUserId,
+        content: data.content,
+        isInternal: data.isInternal ?? false,
+      },
+      select: {
+        id: true,
+        ticketId: true,
+        userId: true,
+        content: true,
+        isInternal: true,
+        createdAt: true,
+        updatedAt: true,
+        user: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    return comment;
+  }
+
+  async list(
+    ticketId: string,
+    query: CommentListQuery,
+    requesterUserId: string,
+    requesterOrganizationId: string,
+  ) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+    const scope = await this.authorizationService.getScope(requesterUserId);
+
+    const ticket = await this.prisma.ticket.findFirst({
+      where: {
+        id: ticketId,
+        ...(scope === AUTH_SCOPES.ORGANIZATION
+          ? { organizationId: requesterOrganizationId }
+          : {}),
+      },
+    });
+
+    if (!ticket) throw new AppError(404, "Ticket not found");
+
+    const where = { ticketId: ticket.id, deletedAt: null };
+
+    const [comments, total] = await this.prisma.$transaction([
+      this.prisma.comment.findMany({
+        where,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          ticketId: true,
+          userId: true,
+          content: true,
+          createdAt: true,
+          updatedAt: true,
+          user: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      }),
+      this.prisma.comment.count({ where }),
+    ]);
+
+    return {
+      comments,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async update(
+    commentId: string,
+    data: CommentUpdateBody,
+    requesterUserId: string,
+    requesterOrganizationId: string,
+  ) {
+    const scope = await this.authorizationService.getScope(requesterUserId);
+
+    /**
+     * 1. Verificar que exista el comentario
+     */
+    const existingComment = await this.prisma.comment.findFirst({
+      where: {
+        id: commentId,
+        deletedAt: null,
+        ...(scope === AUTH_SCOPES.ORGANIZATION
+          ? { organizationId: requesterOrganizationId }
+          : {}),
+      },
+      include: { ticket: true },
+    });
+
+    if (!existingComment) throw new AppError(404, "Comment not found");
+
+    /**
+     * 2. Verificar que el ticket no este cerrado
+     */
+    if (existingComment.ticket.status === TicketStatus.CLOSED)
+      throw new AppError(
+        409,
+        "The ticket is closed and does not allow editing comments",
+      );
+
+    /**
+     * 4. Verificar quién puede modificar este comentario.
+     *
+     *    OWNER / ADMIN / MANAGER:
+     *    pueden editar cualquier comentario.
+     *
+     *    AGENT:
+     *    solamente sus propios comentarios.
+     */
+    const canEditAll = await this.canManageAllComments(
+      requesterUserId,
+      existingComment.organizationId,
+    );
+
+    if (!canEditAll && existingComment.userId !== requesterUserId)
+      throw new AppError(403, "The user cannot modify this comment");
+
+    /**
+     * 5. Actualizar el contenido del comenmtario
+     */
+    const comment = await this.prisma.comment.update({
+      where: { id: commentId },
+      data: {
+        content: data.content ?? existingComment.content,
+      },
+      select: {
+        id: true,
+        ticketId: true,
+        userId: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
+        user: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    return comment;
+  }
+
+  async delete(
+    commentId: string,
+    requesterUserId: string,
+    requesterOrganizationId: string,
+  ) {
+    const scope = await this.authorizationService.getScope(requesterUserId);
+
+    /**
+     * 1. Verificar que el comentario exista
+     */
+    const existingComment = await this.prisma.comment.findFirst({
+      where: {
+        id: commentId,
+        deletedAt: null,
+        ...(scope === AUTH_SCOPES.ORGANIZATION
+          ? { organizationId: requesterOrganizationId }
+          : {}),
+      },
+      include: { ticket: true },
+    });
+
+    if (!existingComment) throw new AppError(404, "Comment not found");
+
+    /**
+     * 2. Verificar que el ticket no este cerrado
+     */
+    if (existingComment.ticket.status === TicketStatus.CLOSED)
+      throw new AppError(
+        409,
+        "The ticket is closed and does not allow deleting comments",
+      );
+
+    /**
+     * 4. Verificar quién puede eliminar este comentario.
+     *
+     *    OWNER / ADMIN / MANAGER:
+     *    pueden eliminar cualquier comentario.
+     *
+     *    AGENT:
+     *    solamente sus propios comentarios.
+     */
+    const canDeleteAll = await this.canManageAllComments(
+      requesterUserId,
+      existingComment.organizationId,
+    );
+
+    if (!canDeleteAll && existingComment.userId !== requesterUserId)
+      throw new AppError(403, "The user cannot delete this comment");
+
+    /**
+     * 5. Eliminar el comentario
+     */
+    const comment = await this.prisma.comment.update({
+      where: { id: commentId },
+      data: {
+        deletedAt: new Date(),
+      },
+      select: {
+        id: true,
+        ticketId: true,
+        userId: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
+        user: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    return comment;
+  }
+
+  private async canManageAllComments(userId: string, organizationId: string) {
+    const roles = await this.prisma.role.findMany({
+      where: {
+        users: {
+          some: {
+            userId,
+          },
+        },
+        OR: [
+          {
+            name: "OWNER",
+            isGlobal: true,
+            organizationId: null,
+          },
+          {
+            name: {
+              in: ["ADMIN", "MANAGER"],
+            },
+            isGlobal: false,
+            organizationId,
+          },
+        ],
+      },
+      select: {
+        name: true,
+      },
+    });
+
+    return roles.length > 0;
+  }
+}

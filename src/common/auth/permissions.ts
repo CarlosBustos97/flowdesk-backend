@@ -41,6 +41,11 @@ export const PERMISSIONS = {
   SLA_POLICIES_CREATE: "sla_policies.create",
   SLA_POLICIES_UPDATE: "sla_policies.update",
   SLA_POLICIES_DELETE: "sla_policies.delete",
+
+  COMMENTS_VIEW: "comments.view",
+  COMMENTS_CREATE: "comments.create",
+  COMMENTS_UPDATE: "comments.update",
+  COMMENTS_DELETE: "comments.delete",
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

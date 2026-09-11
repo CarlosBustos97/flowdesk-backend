@@ -13,7 +13,7 @@ import {
   ticketListSchema,
   ticketShowSchema,
   ticketUpdateSchema,
-} from "./ticket.schhema.js";
+} from "./ticket.schema.js";
 import { authGuard } from "../auth/auth.guard.js";
 import { requirePermission } from "../../common/guards/permission.guard.js";
 import { PERMISSIONS } from "../../common/auth/permissions.js";

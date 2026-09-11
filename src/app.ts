@@ -12,6 +12,7 @@ import { projectRoutes } from './modules/projects/project.routes.js';
 import { ticketCategoryRoutes } from './modules/ticket-categories/ticket-category.routes.js';
 import { slaPolicyRoutes } from './modules/sla-policies/sla-policy.routes.js';
 import { ticketRoutes } from './modules/tickets/ticket.routes.js';
+import { commentRoutes } from './modules/comments/comment.routes.js';
 
 
 export async function buildApp() {
@@ -36,6 +37,7 @@ export async function buildApp() {
   await app.register(ticketCategoryRoutes);
   await app.register(slaPolicyRoutes);
   await app.register(ticketRoutes);
+    await app.register(commentRoutes);
 
   return app;
 }
