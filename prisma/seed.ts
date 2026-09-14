@@ -259,6 +259,26 @@ const PERMISSIONS = [
     description: "Delete comments",
     module: "tickets",
   },
+
+  // Attachments
+  {
+    code: "attachments.view",
+    name: "View attachments",
+    description: "View attachments",
+    module: "tickets",
+  },
+  {
+    code: "attachments.create",
+    name: "Create attachments",
+    description: "Create attachments",
+    module: "tickets",
+  },
+  {
+    code: "attachments.delete",
+    name: "Delete attachments",
+    description: "Delete attachments",
+    module: "tickets",
+  },
 ];
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -295,6 +315,9 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "comments.create",
     "comments.update",
     "comments.delete",
+    "attachments.view",
+    "attachments.create",
+    "attachments.delete",
   ],
 
   MANAGER: [
@@ -324,6 +347,8 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "comments.create",
     "comments.update",
     "comments.delete",
+    "attachments.view",
+    "attachments.create",
   ],
 
   AGENT: [
@@ -339,9 +364,20 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "comments.create",
     "comments.update",
     "comments.delete",
+    "attachments.view",
+    "attachments.create",
   ],
 
-  USER: ["tickets.view", "tickets.create", "projects.view", "tasks.view", "comments.view", "comments.create"],
+  USER: [
+    "tickets.view",
+    "tickets.create",
+    "projects.view",
+    "tasks.view",
+    "comments.view",
+    "comments.create",
+    "attachments.view",
+    "attachments.create",
+  ],
 };
 
 const USERS = [
@@ -445,38 +481,38 @@ async function main() {
       let record;
 
       /*
-         * Global role
-         *
-         * organizationId = role.isGlobal ? null : organization.id
-         * isGlobal = role.isGlobal
-         */
-        record = await tx.role.findFirst({
+       * Global role
+       *
+       * organizationId = role.isGlobal ? null : organization.id
+       * isGlobal = role.isGlobal
+       */
+      record = await tx.role.findFirst({
+        where: {
+          name: role.name,
+        },
+      });
+
+      if (record) {
+        record = await tx.role.update({
           where: {
-            name: role.name,
+            id: record.id,
+          },
+          data: {
+            description: role.description,
+            isGlobal: role.isGlobal,
+            organizationId: role.isGlobal ? null : organization.id,
           },
         });
-
-        if (record) {
-          record = await tx.role.update({
-            where: {
-              id: record.id,
-            },
-            data: {
-              description: role.description,
-              isGlobal: role.isGlobal,
-              organizationId: role.isGlobal ? null : organization.id,
-            },
-          });
-        } else {
-          record = await tx.role.create({
-            data: {
-              organizationId: role.isGlobal ? null : organization.id,
-              name: role.name,
-              description: role.description,
-              isGlobal: role.isGlobal,
-            },
-          });
-        }
+      } else {
+        record = await tx.role.create({
+          data: {
+            organizationId: role.isGlobal ? null : organization.id,
+            name: role.name,
+            description: role.description,
+            isGlobal: role.isGlobal,
+          },
+        });
+      }
 
       roleMap.set(record.name, {
         id: record.id,

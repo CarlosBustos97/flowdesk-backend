@@ -46,6 +46,10 @@ export const PERMISSIONS = {
   COMMENTS_CREATE: "comments.create",
   COMMENTS_UPDATE: "comments.update",
   COMMENTS_DELETE: "comments.delete",
+
+  ATTACHMENTS_VIEW: "attachments.view",
+  ATTACHMENTS_CREATE: "attachments.create",
+  ATTACHMENTS_DELETE: "attachments.delete",
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
