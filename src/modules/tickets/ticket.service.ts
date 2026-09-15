@@ -13,6 +13,7 @@ import type {
 } from "./ticket.types.js";
 import { AUTH_SCOPES } from "../../common/auth/auth-scope.js";
 import { AppError } from "../../common/errors/app-error.js";
+import { calculateSlaDueDates } from "../sla-policies/sla-policy.calculator.js";
 
 export class TicketService {
   constructor(
@@ -254,12 +255,9 @@ export class TicketService {
      * 8. Crear datos fechas y datos del ticket
      */
     const openedAt = new Date();
-    const firstResponseDueAt = new Date(
-      openedAt.getTime() + slaPolicy.firstResponseMinutes * 60 * 1000,
-    );
-
-    const resolutionDueAt = new Date(
-      openedAt.getTime() + slaPolicy.resolutionMinutes * 60 * 1000,
+    const { firstResponseDueAt, resolutionDueAt } = calculateSlaDueDates(
+      slaPolicy,
+      openedAt,
     );
 
     const ticketData = {
@@ -524,7 +522,7 @@ export class TicketService {
       TicketStatus.IN_PROGRESS,
       requesterUserId,
       requesterOrganizationId,
-      [TicketStatus.OPEN,  TicketStatus.WAITING_CUSTOMER]
+      [TicketStatus.OPEN, TicketStatus.WAITING_CUSTOMER],
     );
   }
 
@@ -538,7 +536,7 @@ export class TicketService {
       TicketStatus.WAITING_CUSTOMER,
       requesterUserId,
       requesterOrganizationId,
-      [TicketStatus.IN_PROGRESS]
+      [TicketStatus.IN_PROGRESS],
     );
   }
 
@@ -552,7 +550,7 @@ export class TicketService {
       TicketStatus.RESOLVED,
       requesterUserId,
       requesterOrganizationId,
-      [TicketStatus.OPEN, TicketStatus.IN_PROGRESS]
+      [TicketStatus.OPEN, TicketStatus.IN_PROGRESS],
     );
   }
 
@@ -566,7 +564,7 @@ export class TicketService {
       TicketStatus.CLOSED,
       requesterUserId,
       requesterOrganizationId,
-      [TicketStatus.RESOLVED]
+      [TicketStatus.RESOLVED],
     );
   }
 
@@ -580,7 +578,7 @@ export class TicketService {
       TicketStatus.IN_PROGRESS,
       requesterUserId,
       requesterOrganizationId,
-      [TicketStatus.RESOLVED]
+      [TicketStatus.RESOLVED],
     );
   }
 
@@ -617,7 +615,7 @@ export class TicketService {
     status: TicketStatus,
     requesterUserId: string,
     requesterOrganizationId: string,
-    expectedFromStatus: TicketStatus[]
+    expectedFromStatus: TicketStatus[],
   ) {
     const scope = await this.authorizationService.getScope(requesterUserId);
 
@@ -634,7 +632,11 @@ export class TicketService {
     });
 
     if (!existingTicket) throw new AppError(404, "Ticket not found");
-    if(!expectedFromStatus.includes(existingTicket.status)) throw new AppError(409, "The ticket cannot perform this operation from its current status");
+    if (!expectedFromStatus.includes(existingTicket.status))
+      throw new AppError(
+        409,
+        "The ticket cannot perform this operation from its current status",
+      );
 
     /**
      * 2. Verificar que el cambio de estado sea una transición valida
