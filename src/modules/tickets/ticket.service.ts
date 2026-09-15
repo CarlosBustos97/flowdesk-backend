@@ -595,14 +595,14 @@ export class TicketService {
     return status.includes(to);
   }
 
-  private updateTimeStamp(fromStatus: TicketStatus, toStatus: TicketStatus) {
+  private updateTimeStamp(fromStatus: TicketStatus, toStatus: TicketStatus, date: Date ) {
     const timeStamp: Record<TicketStatus, object> = {
-      RESOLVED: { status: toStatus, resolvedAt: new Date() },
+      RESOLVED: { status: toStatus, resolvedAt: date },
       IN_PROGRESS: {
         status: toStatus,
         ...(fromStatus === TicketStatus.RESOLVED ? { resolvedAt: null } : {}),
       },
-      CLOSED: { status: toStatus, closedAt: new Date() },
+      CLOSED: { status: toStatus, closedAt: date },
       WAITING_CUSTOMER: { status: toStatus },
       OPEN: { status: toStatus },
     };
@@ -648,9 +648,10 @@ export class TicketService {
      * 3. Actualizar el ticket
      */
     const ticket = await this.prisma.$transaction(async (tx) => {
+      const date = new Date();
       const updateTicket = await tx.ticket.update({
         where: { id: ticketId },
-        data: this.updateTimeStamp(existingTicket.status, status),
+        data: this.updateTimeStamp(existingTicket.status, status, date),
         select: {
           id: true,
           subject: true,
@@ -673,6 +674,45 @@ export class TicketService {
         },
       });
 
+      /**
+       * 3.1 Si el ticket fue resuelto actualizar ticket SLA
+       */
+      if (updateTicket.status === TicketStatus.RESOLVED) {
+        const ticketSla = await tx.ticketSla.findUnique({
+          where: { ticketId: updateTicket.id },
+          select: {
+            id: true,
+            resolvedAt: true,
+            resolutionStatus: true,
+            resolutionDueAt: true,
+          },
+        });
+
+        if(!ticketSla) throw new AppError(404, "Ticket SLA configuration is missing");
+        if(!ticketSla.resolutionDueAt) throw new AppError(404, "Ticket SLA resolution due at configuration is missing")
+
+        if (
+          ticketSla.resolvedAt === null &&
+          updateTicket.resolvedAt
+        ) {
+          const resolutionStatus =
+            date <= ticketSla.resolutionDueAt
+              ? SlaStatus.WITHIN_SLA
+              : SlaStatus.BREACHED;
+
+          await tx.ticketSla.updateMany({
+            where: {
+              id: ticketSla.id,
+              resolvedAt: null,
+            },
+            data: {
+              resolvedAt: date,
+              resolutionStatus,
+            },
+          });
+        }
+      }
+
       await tx.ticketStatusHistory.create({
         data: {
           organizationId: existingTicket.organizationId,
@@ -680,7 +720,7 @@ export class TicketService {
           changedById: requesterUserId,
           fromStatus: existingTicket.status,
           toStatus: status,
-          changedAt: new Date(),
+          changedAt: date,
         },
       });
 

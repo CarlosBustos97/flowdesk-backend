@@ -1,4 +1,4 @@
-import { TicketStatus, type PrismaClient } from "@prisma/client";
+import { SlaStatus, TicketStatus, type PrismaClient } from "@prisma/client";
 import type AuthorizationService from "../auth/authorization.service.js";
 import type {
   CommentCreateBody,
@@ -65,26 +65,81 @@ export class CommentService {
     /**
      * 4. Crear el comentario
      */
-    const comment = await this.prisma.comment.create({
-      data: {
-        organizationId: ticket.organizationId,
-        ticketId: ticket.id,
-        userId: requesterUserId,
-        content: data.content,
-        isInternal: data.isInternal ?? false,
-      },
-      select: {
-        id: true,
-        ticketId: true,
-        userId: true,
-        content: true,
-        isInternal: true,
-        createdAt: true,
-        updatedAt: true,
-        user: {
-          select: { id: true, name: true, email: true },
+    const comment = await this.prisma.$transaction(async (tx) => {
+      const createdComment = await tx.comment.create({
+        data: {
+          organizationId: ticket.organizationId,
+          ticketId: ticket.id,
+          userId: requesterUserId,
+          content: data.content,
+          isInternal: data.isInternal ?? false,
         },
-      },
+        select: {
+          id: true,
+          ticketId: true,
+          userId: true,
+          content: true,
+          isInternal: true,
+          createdAt: true,
+          updatedAt: true,
+          user: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+      });
+
+      /**
+       * 5. Registrar primera respuesta del SLA
+       *
+       * Los comentarios internos no cuentan como respuesta al cliente.
+       */
+      if (createdComment.isInternal) return createdComment;
+
+      const ticketSla = await tx.ticketSla.findUnique({
+        where: { ticketId: ticket.id },
+        select: {
+          id: true,
+          firstResponseAt: true,
+          firstResponseDueAt: true,
+        },
+      });
+
+      if (
+        ticketSla &&
+        ticketSla.firstResponseAt === null &&
+        ticketSla.firstResponseDueAt
+      ) {
+        const firstResponseStatus =
+          createdComment.createdAt <= ticketSla.firstResponseDueAt
+            ? SlaStatus.WITHIN_SLA
+            : SlaStatus.BREACHED;
+
+        const updatedSla = await tx.ticketSla.updateMany({
+          where: {
+            id: ticketSla.id,
+            firstResponseAt: null,
+          },
+          data: {
+            firstResponseAt: createdComment.createdAt,
+            firstResponseStatus,
+          },
+        });
+
+        /**
+         * Solo actualizamos Ticket si esta operación
+         * fue realmente la primera respuesta.
+         */
+        if (updatedSla.count === 1) {
+          await tx.ticket.update({
+            where: { id: ticket.id },
+            data: {
+              firstResponseAt: createdComment.createdAt,
+            },
+          });
+        }
+      }
+
+      return createdComment;
     });
 
     return comment;
