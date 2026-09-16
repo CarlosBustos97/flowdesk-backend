@@ -14,11 +14,13 @@ import type {
 import { AUTH_SCOPES } from "../../common/auth/auth-scope.js";
 import { AppError } from "../../common/errors/app-error.js";
 import { calculateSlaDueDates } from "../sla-policies/sla-policy.calculator.js";
+import type { SlaService } from "../sla-policies/sla.service.js";
 
 export class TicketService {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly authorizationService: AuthorizationService,
+    private readonly slaService: SlaService,
   ) {}
 
   async list(
@@ -595,7 +597,11 @@ export class TicketService {
     return status.includes(to);
   }
 
-  private updateTimeStamp(fromStatus: TicketStatus, toStatus: TicketStatus, date: Date ) {
+  private updateTimeStamp(
+    fromStatus: TicketStatus,
+    toStatus: TicketStatus,
+    date: Date,
+  ) {
     const timeStamp: Record<TicketStatus, object> = {
       RESOLVED: { status: toStatus, resolvedAt: date },
       IN_PROGRESS: {
@@ -678,39 +684,7 @@ export class TicketService {
        * 3.1 Si el ticket fue resuelto actualizar ticket SLA
        */
       if (updateTicket.status === TicketStatus.RESOLVED) {
-        const ticketSla = await tx.ticketSla.findUnique({
-          where: { ticketId: updateTicket.id },
-          select: {
-            id: true,
-            resolvedAt: true,
-            resolutionStatus: true,
-            resolutionDueAt: true,
-          },
-        });
-
-        if(!ticketSla) throw new AppError(404, "Ticket SLA configuration is missing");
-        if(!ticketSla.resolutionDueAt) throw new AppError(404, "Ticket SLA resolution due at configuration is missing")
-
-        if (
-          ticketSla.resolvedAt === null &&
-          updateTicket.resolvedAt
-        ) {
-          const resolutionStatus =
-            date <= ticketSla.resolutionDueAt
-              ? SlaStatus.WITHIN_SLA
-              : SlaStatus.BREACHED;
-
-          await tx.ticketSla.updateMany({
-            where: {
-              id: ticketSla.id,
-              resolvedAt: null,
-            },
-            data: {
-              resolvedAt: date,
-              resolutionStatus,
-            },
-          });
-        }
+        await this.slaService.resolveTicketSla(updateTicket.id, date, tx);
       }
 
       await tx.ticketStatusHistory.create({
@@ -723,6 +697,18 @@ export class TicketService {
           changedAt: date,
         },
       });
+
+      if (
+        existingTicket.status === TicketStatus.IN_PROGRESS &&
+        status === TicketStatus.WAITING_CUSTOMER
+      )
+        await this.slaService.startPause(ticketId, date, tx);
+
+      if (
+        existingTicket.status === TicketStatus.WAITING_CUSTOMER &&
+        status === TicketStatus.IN_PROGRESS
+      )
+        await this.slaService.endPause(ticketId, date, tx);
 
       return updateTicket;
     });

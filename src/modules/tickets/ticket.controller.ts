@@ -7,9 +7,13 @@ import type {
   TicketUpdateBody,
   TicketUpdateParams,
 } from "./ticket.types.js";
+import type { SlaService } from "../sla-policies/sla.service.js";
 
 export class TicketController {
-  constructor(private readonly ticketService: TicketService) {}
+  constructor(
+    private readonly ticketService: TicketService,
+    private readonly slaService: SlaService,
+  ) {}
 
   async list(
     request: FastifyRequest<{ Querystring: TicketListQuery }>,
@@ -128,6 +132,15 @@ export class TicketController {
       request.user.id,
       request.user.organizationId,
     );
+
+    return reply.status(200).send({ success: true, data: result });
+  }
+
+  async sla(
+    request: FastifyRequest<{ Params: TicketShowParams }>,
+    reply: FastifyReply,
+  ) {
+    const result = await this.slaService.evaluateTicketSla(request.params.id);
 
     return reply.status(200).send({ success: true, data: result });
   }

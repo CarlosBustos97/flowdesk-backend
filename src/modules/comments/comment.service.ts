@@ -1,4 +1,4 @@
-import { SlaStatus, TicketStatus, type PrismaClient } from "@prisma/client";
+import { TicketStatus, type PrismaClient } from "@prisma/client";
 import type AuthorizationService from "../auth/authorization.service.js";
 import type {
   CommentCreateBody,
@@ -9,6 +9,8 @@ import type {
 } from "./comment.types.js";
 import { AUTH_SCOPES } from "../../common/auth/auth-scope.js";
 import { AppError } from "../../common/errors/app-error.js";
+import { calculateElapsedTime, evaluateEffectiveSlaStatus } from "../sla-policies/sla-policy.calculator.js";
+
 
 export class CommentService {
   constructor(
@@ -101,6 +103,23 @@ export class CommentService {
           id: true,
           firstResponseAt: true,
           firstResponseDueAt: true,
+          ticketSlaPauses: {
+            select: {
+              durationSeconds: true,
+              startedAt: true,
+              endedAt: true,
+            },
+          },
+          slaPolicy: {
+            select: {
+              firstResponseMinutes: true,
+            },
+          },
+          ticket: {
+            select: {
+              openedAt: true,
+            },
+          },
         },
       });
 
@@ -109,10 +128,37 @@ export class CommentService {
         ticketSla.firstResponseAt === null &&
         ticketSla.firstResponseDueAt
       ) {
-        const firstResponseStatus =
-          createdComment.createdAt <= ticketSla.firstResponseDueAt
-            ? SlaStatus.WITHIN_SLA
-            : SlaStatus.BREACHED;
+        const totalPausedSeconds = ticketSla.ticketSlaPauses.reduce(
+          (totalDurationSeconds, pause) => {
+            if (pause.durationSeconds !== null) {
+              return totalDurationSeconds + Number(pause.durationSeconds);
+            }
+
+            if (!pause.endedAt) {
+              const activePauseSeconds = Math.floor(
+                (createdComment.createdAt.getTime() -
+                  pause.startedAt.getTime()) /
+                  1000,
+              );
+
+              return totalDurationSeconds + Math.max(0, activePauseSeconds);
+            }
+
+            return totalDurationSeconds;
+          },
+          0,
+        );
+
+        const effectiveElapsed = calculateElapsedTime(
+          ticketSla.ticket.openedAt,
+          createdComment.createdAt,
+          totalPausedSeconds,
+        );
+
+        const firstResponseStatus = evaluateEffectiveSlaStatus(
+          effectiveElapsed,
+          ticketSla.slaPolicy.firstResponseMinutes,
+        );
 
         const updatedSla = await tx.ticketSla.updateMany({
           where: {

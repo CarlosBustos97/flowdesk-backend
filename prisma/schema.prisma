@@ -375,6 +375,9 @@ model TicketSla {
   ticket    Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   slaPolicy SlaPolicy @relation(fields: [slaPolicyId], references: [id], onDelete: Restrict)
 
+  ticketSlaPauses TicketSlaPause[]
+  
+
   @@index([slaPolicyId])
   @@index([firstResponseStatus])
   @@index([resolutionStatus])
@@ -785,7 +788,7 @@ model Invitation {
 
 model PasswordResetToken {
   id     String @id @default(uuid()) @db.Uuid
-  userId String @db.Uuid
+  userId String   @db.Uuid
 
   tokenHash String    @unique @db.VarChar(255)
   expiresAt DateTime
@@ -800,4 +803,18 @@ model PasswordResetToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("password_reset_tokens")
+}
+
+model TicketSlaPause {
+  id              String   @id @default(uuid()) @db.Uuid
+  ticketSlaId     String   @db.Uuid
+  startedAt       DateTime
+  endedAt         DateTime?
+  durationSeconds BigInt?
+  createdAt       DateTime @default(now())
+
+  ticketSla TicketSla @relation(fields: [ticketSlaId], references: [id], onDelete: Cascade)
+
+  @@index([ticketSlaId])
+  @@map("ticket_sla_pauses")
 }

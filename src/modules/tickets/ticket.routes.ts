@@ -17,10 +17,14 @@ import {
 import { authGuard } from "../auth/auth.guard.js";
 import { requirePermission } from "../../common/guards/permission.guard.js";
 import { PERMISSIONS } from "../../common/auth/permissions.js";
+import { SlaService } from "../sla-policies/sla.service.js";
 
 export async function ticketRoutes(app: FastifyInstance) {
+  const slaService = new SlaService(app.prisma);
+
   const ticketController = new TicketController(
-    new TicketService(app.prisma, app.authorizationService),
+    new TicketService(app.prisma, app.authorizationService, slaService),
+    slaService,
   );
 
   app.get<{ Querystring: TicketListQuery }>(
@@ -39,6 +43,15 @@ export async function ticketRoutes(app: FastifyInstance) {
       preHandler: [authGuard, requirePermission(PERMISSIONS.TICKETS_VIEW)],
     },
     ticketController.show.bind(ticketController),
+  );
+
+  app.get<{ Params: TicketShowParams }>(
+    "/tickets/:id/sla",
+    {
+      schema: ticketShowSchema,
+      preHandler: [authGuard, requirePermission(PERMISSIONS.TICKETS_VIEW)],
+    },
+    ticketController.sla.bind(ticketController),
   );
 
   app.post<{ Body: TicketCreateBody }>(
