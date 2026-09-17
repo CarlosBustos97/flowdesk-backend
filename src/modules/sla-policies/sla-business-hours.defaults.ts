@@ -1,0 +1,32 @@
+export const DEFAULT_SLA_BUSINESS_HOURS = [
+  {
+    dayOfWeek: 1,
+    startTime: "09:00",
+    endTime: "18:00",
+  },
+  {
+    dayOfWeek: 2,
+    startTime: "09:00",
+    endTime: "18:00",
+  },
+  {
+    dayOfWeek: 3,
+    startTime: "09:00",
+    endTime: "18:00",
+  },
+  {
+    dayOfWeek: 4,
+    startTime: "09:00",
+    endTime: "18:00",
+  },
+  {
+    dayOfWeek: 5,
+    startTime: "09:00",
+    endTime: "18:00",
+  },
+  {
+    dayOfWeek: 6,
+    startTime: "09:00",
+    endTime: "13:00",
+  },
+];

@@ -19,16 +19,23 @@ export type PolicyCreateBody = {
   priority: Priority;
   firstResponseMinutes: number;
   resolutionMinutes: number;
+  businessHours?: BusinessHour[];
 };
 
 export type PolicyUpdateParams = {
   id: string;
 };
 
-export type PolicyUpdateBody  = {
+export type PolicyUpdateBody = {
   name?: string;
   description?: string;
   priority?: Priority;
   firstResponseMinutes?: number;
   resolutionMinutes?: number;
+};
+
+export type BusinessHour = {
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
 };
