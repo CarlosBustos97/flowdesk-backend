@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Priority, PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
@@ -401,6 +401,39 @@ const USERS = [
   },
 ];
 
+const businessHours = [
+  {
+    dayOfWeek: 1,
+    startTime: "09:00",
+    endTime: "18:00",
+  },
+  {
+    dayOfWeek: 2,
+    startTime: "09:00",
+    endTime: "18:00",
+  },
+  {
+    dayOfWeek: 3,
+    startTime: "09:00",
+    endTime: "18:00",
+  },
+  {
+    dayOfWeek: 4,
+    startTime: "09:00",
+    endTime: "18:00",
+  },
+  {
+    dayOfWeek: 5,
+    startTime: "09:00",
+    endTime: "18:00",
+  },
+  {
+    dayOfWeek: 6,
+    startTime: "09:00",
+    endTime: "13:00",
+  },
+];
+
 async function main() {
   console.log("🌱 Starting database seed...");
 
@@ -617,6 +650,64 @@ async function main() {
     }
 
     console.log("✓ User roles assigned");
+
+    /**
+     * 6. SLA policies
+     */
+
+    const slaPolicy = await prisma.slaPolicy.upsert({
+      where: {
+        organizationId_name: {
+          organizationId: organization.id,
+          name: "Standard Support",
+        },
+      },
+      update: {
+        description: "Standard SLA policy for customer support",
+        priority: Priority.MEDIUM,
+        firstResponseMinutes: 20,
+        resolutionMinutes: 480,
+        isActive: true,
+      },
+      create: {
+        organizationId: organization.id,
+        name: "Standard Support",
+        description: "Standard SLA policy for customer support",
+        priority: Priority.MEDIUM,
+        firstResponseMinutes: 20,
+        resolutionMinutes: 480,
+        isActive: true,
+      },
+    });
+
+    console.log(`SLA Policy: ${slaPolicy.name}`);
+
+    // Business Hours
+    for (const businessHour of businessHours) {
+      await prisma.slaBusinessHour.upsert({
+        where: {
+          slaPolicyId_dayOfWeek: {
+            slaPolicyId: slaPolicy.id,
+            dayOfWeek: businessHour.dayOfWeek,
+          },
+        },
+        update: {
+          startTime: businessHour.startTime,
+          endTime: businessHour.endTime,
+        },
+        create: {
+          slaPolicyId: slaPolicy.id,
+          dayOfWeek: businessHour.dayOfWeek,
+          startTime: businessHour.startTime,
+          endTime: businessHour.endTime,
+        },
+      });
+    }
+
+    console.log("Business hours created/updated:");
+    console.table(businessHours);
+
+    console.log("✅ SLA seed completed.");
   });
 
   console.log("🌱 Database seed completed successfully.");

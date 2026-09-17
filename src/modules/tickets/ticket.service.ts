@@ -242,6 +242,16 @@ export class TicketService {
      */
     const slaPolicy = await this.prisma.slaPolicy.findFirst({
       where: { id: data.slaPolicyId, organizationId: organization.id },
+      select: {
+        id: true,
+        priority: true,
+        firstResponseMinutes: true,
+        resolutionMinutes: true,
+        isActive: true,
+        businessHours: {
+          select: { dayOfWeek: true, startTime: true, endTime: true },
+        },
+      },
     });
 
     if (!slaPolicy) throw new AppError(404, "SLA policy not found");
@@ -260,6 +270,7 @@ export class TicketService {
     const { firstResponseDueAt, resolutionDueAt } = calculateSlaDueDates(
       slaPolicy,
       openedAt,
+      slaPolicy.businessHours
     );
 
     const ticketData = {

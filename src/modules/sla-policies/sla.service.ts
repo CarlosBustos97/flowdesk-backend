@@ -5,6 +5,7 @@ import {
   calculateElapsedTime,
   evaluateEffectiveSlaStatus,
 } from "./sla-policy.calculator.js";
+import { calculateElapsedWorkTime } from "./sla-business-hours.calculator.js";
 
 export class SlaService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -17,7 +18,6 @@ export class SlaService {
       include: {
         ticketSlaPauses: {
           select: {
-            durationSeconds: true,
             startedAt: true,
             endedAt: true,
           },
@@ -26,6 +26,9 @@ export class SlaService {
           select: {
             resolutionMinutes: true,
             firstResponseMinutes: true,
+            businessHours: {
+              select: { dayOfWeek: true, startTime: true, endTime: true },
+            },
           },
         },
         ticket: {
@@ -48,38 +51,13 @@ export class SlaService {
     const now = new Date();
 
     /**
-     * Calcular tiempo total pausado.
-     *
-     * Incluimos:
-     * - pausas ya finalizadas
-     * - pausa actualmente activa
-     */
-    const totalPausedSeconds = ticketSla.ticketSlaPauses.reduce(
-      (totalDurationSeconds, pause) => {
-        if (pause.durationSeconds !== null) {
-          return totalDurationSeconds + Number(pause.durationSeconds);
-        }
-
-        if (!pause.endedAt) {
-          const activePauseSeconds = Math.floor(
-            (now.getTime() - pause.startedAt.getTime()) / 1000,
-          );
-
-          return totalDurationSeconds + activePauseSeconds;
-        }
-
-        return totalDurationSeconds;
-      },
-      0,
-    );
-
-    /**
      * Calcular tiempo efectivo consumido por el SLA.
      */
-    const effectiveElapsed = calculateElapsedTime(
+    const effectiveElapsed = calculateElapsedWorkTime(
       ticketSla.ticket.openedAt,
       now,
-      totalPausedSeconds,
+      ticketSla.ticketSlaPauses,
+      ticketSla.slaPolicy.businessHours,
     );
 
     let firstResponseStatus = ticketSla.firstResponseStatus;
@@ -206,7 +184,6 @@ export class SlaService {
       include: {
         ticketSlaPauses: {
           select: {
-            durationSeconds: true,
             startedAt: true,
             endedAt: true,
           },
@@ -214,6 +191,9 @@ export class SlaService {
         slaPolicy: {
           select: {
             resolutionMinutes: true,
+            businessHours: {
+              select: { dayOfWeek: true, startTime: true, endTime: true },
+            },
           },
         },
         ticket: {
@@ -237,38 +217,13 @@ export class SlaService {
     }
 
     /**
-     * Calcular tiempo total pausado.
-     *
-     * Incluimos:
-     * - pausas ya finalizadas
-     * - pausa actualmente activa
-     */
-    const totalPausedSeconds = ticketSla.ticketSlaPauses.reduce(
-      (totalDurationSeconds, pause) => {
-        if (pause.durationSeconds !== null) {
-          return totalDurationSeconds + Number(pause.durationSeconds);
-        }
-
-        if (!pause.endedAt) {
-          const activePauseSeconds = Math.floor(
-            (resolvedAt.getTime() - pause.startedAt.getTime()) / 1000,
-          );
-
-          return totalDurationSeconds + activePauseSeconds;
-        }
-
-        return totalDurationSeconds;
-      },
-      0,
-    );
-
-    /**
      * Calcular tiempo efectivo consumido por el Resolution SLA.
      */
-    const effectiveElapsed = calculateElapsedTime(
+    const effectiveElapsed = calculateElapsedWorkTime(
       ticketSla.ticket.openedAt,
       resolvedAt,
-      totalPausedSeconds,
+      ticketSla.ticketSlaPauses,
+      ticketSla.slaPolicy.businessHours
     );
 
     /**

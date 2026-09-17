@@ -1,4 +1,5 @@
 import type { Priority, SlaStatus } from "@prisma/client";
+import { addBusinessTime } from "./sla-business-hours.calculator.js";
 
 export type SlaPolicyForCalculation = {
   id: string;
@@ -12,17 +13,28 @@ export type SlaDueDates = {
   resolutionDueAt: Date;
 };
 
+export type SlaBusinessHourForCalculation = {
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+};
+
 export function calculateSlaDueDates(
   slaPolicy: SlaPolicyForCalculation,
   openedAt: Date,
+  businessHours?: SlaBusinessHourForCalculation[],
 ): SlaDueDates {
-  const firstResponseDueAt = new Date(
-    openedAt.getTime() + slaPolicy.firstResponseMinutes * 60 * 1000,
-  );
+  const firstResponseDueAt =
+    businessHours != undefined && businessHours.length > 0
+      ? addBusinessTime(openedAt, slaPolicy.firstResponseMinutes, businessHours)
+      : new Date(
+          openedAt.getTime() + slaPolicy.firstResponseMinutes * 60 * 1000,
+        );
 
-  const resolutionDueAt = new Date(
-    openedAt.getTime() + slaPolicy.resolutionMinutes * 60 * 1000,
-  );
+  const resolutionDueAt =
+    businessHours != undefined && businessHours.length > 0
+      ? addBusinessTime(openedAt, slaPolicy.resolutionMinutes, businessHours)
+      : new Date(openedAt.getTime() + slaPolicy.resolutionMinutes * 60 * 1000);
 
   return {
     firstResponseDueAt,

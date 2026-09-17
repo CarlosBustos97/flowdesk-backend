@@ -586,8 +586,9 @@ model SlaPolicy {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  tickets    Ticket[]
-  ticketSlas TicketSla[]
+  tickets         Ticket[]
+  ticketSlas      TicketSla[]
+  businessHours   SlaBusinessHour[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -817,4 +818,19 @@ model TicketSlaPause {
 
   @@index([ticketSlaId])
   @@map("ticket_sla_pauses")
+}
+
+model SlaBusinessHour {
+  id          String @id @default(uuid()) @db.Uuid
+  slaPolicyId String @db.Uuid
+
+  dayOfWeek  Int
+  startTime  String @db.VarChar(5)
+  endTime    String @db.VarChar(5)
+
+  slaPolicy SlaPolicy @relation(fields: [slaPolicyId], references: [id], onDelete: Cascade)
+
+  @@unique([slaPolicyId, dayOfWeek])
+  @@index([slaPolicyId])
+  @@map("sla_business_hours")
 }

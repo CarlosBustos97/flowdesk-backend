@@ -9,8 +9,11 @@ import type {
 } from "./comment.types.js";
 import { AUTH_SCOPES } from "../../common/auth/auth-scope.js";
 import { AppError } from "../../common/errors/app-error.js";
-import { calculateElapsedTime, evaluateEffectiveSlaStatus } from "../sla-policies/sla-policy.calculator.js";
-
+import {
+  calculateElapsedTime,
+  evaluateEffectiveSlaStatus,
+} from "../sla-policies/sla-policy.calculator.js";
+import { calculateElapsedWorkTime } from "../sla-policies/sla-business-hours.calculator.js";
 
 export class CommentService {
   constructor(
@@ -75,6 +78,7 @@ export class CommentService {
           userId: requesterUserId,
           content: data.content,
           isInternal: data.isInternal ?? false,
+          createdAt: new Date()
         },
         select: {
           id: true,
@@ -105,7 +109,6 @@ export class CommentService {
           firstResponseDueAt: true,
           ticketSlaPauses: {
             select: {
-              durationSeconds: true,
               startedAt: true,
               endedAt: true,
             },
@@ -113,6 +116,9 @@ export class CommentService {
           slaPolicy: {
             select: {
               firstResponseMinutes: true,
+              businessHours: {
+                select: { dayOfWeek: true, startTime: true, endTime: true },
+              },
             },
           },
           ticket: {
@@ -128,31 +134,11 @@ export class CommentService {
         ticketSla.firstResponseAt === null &&
         ticketSla.firstResponseDueAt
       ) {
-        const totalPausedSeconds = ticketSla.ticketSlaPauses.reduce(
-          (totalDurationSeconds, pause) => {
-            if (pause.durationSeconds !== null) {
-              return totalDurationSeconds + Number(pause.durationSeconds);
-            }
-
-            if (!pause.endedAt) {
-              const activePauseSeconds = Math.floor(
-                (createdComment.createdAt.getTime() -
-                  pause.startedAt.getTime()) /
-                  1000,
-              );
-
-              return totalDurationSeconds + Math.max(0, activePauseSeconds);
-            }
-
-            return totalDurationSeconds;
-          },
-          0,
-        );
-
-        const effectiveElapsed = calculateElapsedTime(
+        const effectiveElapsed = calculateElapsedWorkTime(
           ticketSla.ticket.openedAt,
           createdComment.createdAt,
-          totalPausedSeconds,
+          ticketSla.ticketSlaPauses,
+          ticketSla.slaPolicy.businessHours
         );
 
         const firstResponseStatus = evaluateEffectiveSlaStatus(
