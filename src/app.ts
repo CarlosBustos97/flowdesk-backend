@@ -15,6 +15,8 @@ import { ticketRoutes } from "./modules/tickets/ticket.routes.js";
 import { commentRoutes } from "./modules/comments/comment.routes.js";
 import multipartPlugin from "./plugins/multipart.js";
 import { attachmentRoutes } from "./modules/attachments/attachment.routes.js";
+import { slaCalendarRoutes } from "./modules/sla-calendars/sla-calendar.routes.js";
+import { slaBusinessHourRoutes } from "./modules/sla-calendars/business-hours/sla-business-hour.routes.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -41,6 +43,8 @@ export async function buildApp() {
   await app.register(ticketRoutes);
   await app.register(commentRoutes);
   await app.register(attachmentRoutes);
+   await app.register(slaCalendarRoutes);
+    await app.register(slaBusinessHourRoutes);
 
   return app;
 }
