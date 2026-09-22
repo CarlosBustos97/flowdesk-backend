@@ -279,6 +279,26 @@ const PERMISSIONS = [
     description: "Delete attachments",
     module: "tickets",
   },
+
+  // SLA calendar
+  {
+    code: "sla_calendars.view",
+    name: "View SLA calendar",
+    description: "View SLA calendar",
+    module: "tickets",
+  },
+  {
+    code: "sla_calendars.create",
+    name: "Create SLA calendar",
+    description: "Create SLA calendar",
+    module: "tickets",
+  },
+  {
+    code: "sla_calendars.update",
+    name: "Update SLA calendar",
+    description: "Update SLA calendar",
+    module: "tickets",
+  },
 ];
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -318,6 +338,9 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "attachments.view",
     "attachments.create",
     "attachments.delete",
+    "sla_calendars.view",
+    "sla_calendars.create",
+    "sla_calendars.update",
   ],
 
   MANAGER: [
@@ -652,10 +675,35 @@ async function main() {
     console.log("✓ User roles assigned");
 
     /**
-     * 6. SLA policies
+     * 6. SLA calendar
      */
+    const slaCalendar = await tx.slaCalendar.upsert({
+      where: {
+        organizationId_name: {
+          organizationId: organization.id,
+          name: "Standard Support Calendar",
+        },
+      },
+      update: {
+        description: "Business calendar for standard customer support",
+        timezone: organization.timezone,
+        isActive: true,
+      },
+      create: {
+        organizationId: organization.id,
+        name: "Standard Support Calendar",
+        description: "Business calendar for standard customer support",
+        timezone: organization.timezone,
+        isActive: true,
+      },
+    });
 
-    const slaPolicy = await prisma.slaPolicy.upsert({
+    console.log(`SLA Calendar: ${slaCalendar.name}`);
+
+    /**
+     * 7. SLA policy
+     */
+    const slaPolicy = await tx.slaPolicy.upsert({
       where: {
         organizationId_name: {
           organizationId: organization.id,
@@ -667,10 +715,12 @@ async function main() {
         priority: Priority.MEDIUM,
         firstResponseMinutes: 20,
         resolutionMinutes: 480,
+        slaCalendarId: slaCalendar.id,
         isActive: true,
       },
       create: {
         organizationId: organization.id,
+        slaCalendarId: slaCalendar.id,
         name: "Standard Support",
         description: "Standard SLA policy for customer support",
         priority: Priority.MEDIUM,
@@ -682,12 +732,14 @@ async function main() {
 
     console.log(`SLA Policy: ${slaPolicy.name}`);
 
-    // Business Hours
+    /**
+     * 8. Business Hours
+     */
     for (const businessHour of businessHours) {
-      await prisma.slaBusinessHour.upsert({
+      await tx.slaBusinessHour.upsert({
         where: {
-          slaPolicyId_dayOfWeek: {
-            slaPolicyId: slaPolicy.id,
+          slaCalendarId_dayOfWeek: {
+            slaCalendarId: slaCalendar.id,
             dayOfWeek: businessHour.dayOfWeek,
           },
         },
@@ -696,7 +748,7 @@ async function main() {
           endTime: businessHour.endTime,
         },
         create: {
-          slaPolicyId: slaPolicy.id,
+          slaCalendarId: slaCalendar.id,
           dayOfWeek: businessHour.dayOfWeek,
           startTime: businessHour.startTime,
           endTime: businessHour.endTime,

@@ -1,4 +1,4 @@
-import { UserStatus } from "../../generated/prisma/edge.js";
+import { UserStatus } from "@prisma/client";
 
 export const userListSchema = {
   querystring: {

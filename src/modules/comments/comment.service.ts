@@ -78,7 +78,7 @@ export class CommentService {
           userId: requesterUserId,
           content: data.content,
           isInternal: data.isInternal ?? false,
-          createdAt: new Date()
+          createdAt: new Date(),
         },
         select: {
           id: true,
@@ -116,8 +116,12 @@ export class CommentService {
           slaPolicy: {
             select: {
               firstResponseMinutes: true,
-              businessHours: {
-                select: { dayOfWeek: true, startTime: true, endTime: true },
+              slaCalendar: {
+                select: {
+                  businessHours: {
+                    select: { dayOfWeek: true, startTime: true, endTime: true },
+                  },
+                },
               },
             },
           },
@@ -138,7 +142,7 @@ export class CommentService {
           ticketSla.ticket.openedAt,
           createdComment.createdAt,
           ticketSla.ticketSlaPauses,
-          ticketSla.slaPolicy.businessHours
+          ticketSla.slaPolicy.slaCalendar.businessHours
         );
 
         const firstResponseStatus = evaluateEffectiveSlaStatus(

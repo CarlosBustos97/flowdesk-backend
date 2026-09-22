@@ -8,7 +8,6 @@ import type {
 } from "./sla-policy.types.js";
 import { AUTH_SCOPES } from "../../common/auth/auth-scope.js";
 import { AppError } from "../../common/errors/app-error.js";
-import { DEFAULT_SLA_BUSINESS_HOURS } from "./sla-business-hours.defaults.js";
 
 export class SlaPolicyService {
   constructor(
@@ -66,6 +65,9 @@ export class SlaPolicyService {
           isActive: true,
           createdAt: true,
           organization: { select: { id: true, name: true, slug: true } },
+          slaCalendar: {
+            select: { id: true, name: true, timezone: true, isActive: true },
+          },
         },
       }),
       this.prisma.slaPolicy.count({ where }),
@@ -108,6 +110,9 @@ export class SlaPolicyService {
         isActive: true,
         createdAt: true,
         organization: { select: { id: true, name: true, slug: true } },
+        slaCalendar: {
+          select: { id: true, name: true, timezone: true, isActive: true },
+        },
       },
     });
 
@@ -144,7 +149,22 @@ export class SlaPolicyService {
     if (!organization) throw new AppError(404, "Organization not found");
 
     /**
-     * 3. Verificar que no exista una SLA policy con el mismo nombre dentro de la organización
+     * 3. Validar que el calendario exista y pertenezca a la organización
+     */
+    const slaCalendar = await this.prisma.slaCalendar.findUnique({
+      where: { id: data.slaCalendarId },
+    });
+
+    if (!slaCalendar) throw new AppError(404, "SLA calendar not found");
+
+    if (slaCalendar.organizationId !== data.organizationId)
+      throw new AppError(
+        409,
+        "The organization entered does not match the SLA calendar organization",
+      );
+
+    /**
+     * 4. Verificar que no exista una SLA policy con el mismo nombre dentro de la organización
      */
     const normalizedName = data.name.trim();
     if (normalizedName === "")
@@ -161,36 +181,6 @@ export class SlaPolicyService {
       throw new AppError(409, "SLA policy with this name already exists");
 
     /**
-     * 4. Si viene businessHours, validar que sean correctos
-     * sino dejar el que se definio por defecto
-     */
-    const businessHours =
-      data.businessHours !== undefined
-        ? data.businessHours
-        : DEFAULT_SLA_BUSINESS_HOURS;
-
-    if (businessHours.length === 0)
-      throw new AppError(400, "Invalid business hours format");
-
-    const days = new Set();
-
-    for (const businessHour of businessHours) {
-      if (days.has(businessHour.dayOfWeek))
-        throw new AppError(
-          409,
-          "The business hours must be unique; they cannot be repeated",
-        );
-
-      if (businessHour.startTime >= businessHour.endTime)
-        throw new AppError(
-          409,
-          "The start time for business hours cannot be later than the end time",
-        );
-
-      days.add(businessHour.dayOfWeek);
-    }
-
-    /**
      * 5. Crear SLA policy
      */
     const slaPolicy = await this.prisma.$transaction(async (tx) => {
@@ -202,7 +192,7 @@ export class SlaPolicyService {
           priority: data.priority,
           firstResponseMinutes: data.firstResponseMinutes,
           resolutionMinutes: data.resolutionMinutes,
-          businessHours: { create: businessHours },
+          slaCalendarId: data.slaCalendarId,
         },
         select: {
           id: true,
@@ -214,12 +204,16 @@ export class SlaPolicyService {
           isActive: true,
           createdAt: true,
           organization: { select: { id: true, name: true, slug: true } },
-          businessHours: {
+          slaCalendar: {
             select: {
-              id: true,
-              dayOfWeek: true,
-              startTime: true,
-              endTime: true,
+              businessHours: {
+                select: {
+                  id: true,
+                  dayOfWeek: true,
+                  startTime: true,
+                  endTime: true,
+                },
+              },
             },
           },
         },

@@ -55,6 +55,7 @@ export const PolicyCreateSchema = {
       "priority",
       "firstResponseMinutes",
       "resolutionMinutes",
+      "slaCalendarId",
     ],
     additionalProperties: false,
     properties: {
@@ -84,28 +85,9 @@ export const PolicyCreateSchema = {
         type: "integer",
         minimum: 1,
       },
-      businessHours: {
-        type: "array",
-        items: {
-          type: "object",
-          required: ["dayOfWeek", "startTime", "endTime"],
-          additionalProperties: false,
-          properties: {
-            dayOfWeek: {
-              type: "integer",
-              minimum: 1,
-              maximum: 7,
-            },
-            startTime: {
-              type: "string",
-              pattern: "^(?:[01]\\d|2[0-3]):[0-5]\\d$",
-            },
-            endTime: {
-              type: "string",
-              pattern: "^(?:[01]\\d|2[0-3]):[0-5]\\d$",
-            },
-          },
-        },
+      slaCalendarId: {
+        type: "string",
+        format: "uuid",
       },
     },
   },

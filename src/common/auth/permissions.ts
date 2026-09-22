@@ -50,6 +50,10 @@ export const PERMISSIONS = {
   ATTACHMENTS_VIEW: "attachments.view",
   ATTACHMENTS_CREATE: "attachments.create",
   ATTACHMENTS_DELETE: "attachments.delete",
+
+  SLA_CALENDARS_VIEW: "sla_calendars.view",
+  SLA_CALENDARS_CREATE: "sla_calendars.create",
+  SLA_CALENDARS_UPDATE: "sla_calendars.update",
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

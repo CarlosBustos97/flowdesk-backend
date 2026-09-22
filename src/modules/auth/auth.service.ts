@@ -1,10 +1,10 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, UserStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { Redis } from "ioredis";
 import crypto from "node:crypto";
 import type { LoginResponse } from "./auth.types.js";
 import { AppError } from "../../common/errors/app-error.js";
-import { UserStatus } from "../../generated/prisma/edge.js";
+
 
 export class AuthService {
   constructor(

@@ -19,7 +19,7 @@ export type PolicyCreateBody = {
   priority: Priority;
   firstResponseMinutes: number;
   resolutionMinutes: number;
-  businessHours?: BusinessHour[];
+  slaCalendarId: string;
 };
 
 export type PolicyUpdateParams = {

@@ -1,4 +1,4 @@
-import type { UserStatus } from "../../generated/prisma/wasm.js";
+import type { UserStatus } from "@prisma/client";
 
 export type UserListQuery = {
   page?: number;

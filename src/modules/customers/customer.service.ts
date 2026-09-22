@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import { CustomerStatus, type PrismaClient } from "@prisma/client";
 import type AuthorizationService from "../auth/authorization.service.js";
 import type {
   CustomerCreateBody,
@@ -7,7 +7,6 @@ import type {
 } from "./customer.types.js";
 import { AUTH_SCOPES } from "../../common/auth/auth-scope.js";
 import { AppError } from "../../common/errors/app-error.js";
-import { CustomerStatus } from "../../generated/prisma/client.js";
 
 export class CustomerService {
   constructor(

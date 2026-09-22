@@ -248,8 +248,16 @@ export class TicketService {
         firstResponseMinutes: true,
         resolutionMinutes: true,
         isActive: true,
-        businessHours: {
-          select: { dayOfWeek: true, startTime: true, endTime: true },
+        slaCalendar: {
+          select: {
+            businessHours: {
+              select: {
+                dayOfWeek: true,
+                startTime: true,
+                endTime: true,
+              },
+            },
+          },
         },
       },
     });
@@ -270,7 +278,7 @@ export class TicketService {
     const { firstResponseDueAt, resolutionDueAt } = calculateSlaDueDates(
       slaPolicy,
       openedAt,
-      slaPolicy.businessHours
+      slaPolicy.slaCalendar.businessHours,
     );
 
     const ticketData = {

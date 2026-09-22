@@ -26,8 +26,16 @@ export class SlaService {
           select: {
             resolutionMinutes: true,
             firstResponseMinutes: true,
-            businessHours: {
-              select: { dayOfWeek: true, startTime: true, endTime: true },
+            slaCalendar: {
+              select: {
+                businessHours: {
+                  select: {
+                    dayOfWeek: true,
+                    startTime: true,
+                    endTime: true,
+                  },
+                },
+              },
             },
           },
         },
@@ -57,7 +65,7 @@ export class SlaService {
       ticketSla.ticket.openedAt,
       now,
       ticketSla.ticketSlaPauses,
-      ticketSla.slaPolicy.businessHours,
+      ticketSla.slaPolicy.slaCalendar.businessHours,
     );
 
     let firstResponseStatus = ticketSla.firstResponseStatus;
@@ -191,8 +199,16 @@ export class SlaService {
         slaPolicy: {
           select: {
             resolutionMinutes: true,
-            businessHours: {
-              select: { dayOfWeek: true, startTime: true, endTime: true },
+            slaCalendar: {
+              select: {
+                businessHours: {
+                  select: {
+                    dayOfWeek: true,
+                    startTime: true,
+                    endTime: true,
+                  },
+                },
+              },
             },
           },
         },
@@ -223,7 +239,7 @@ export class SlaService {
       ticketSla.ticket.openedAt,
       resolvedAt,
       ticketSla.ticketSlaPauses,
-      ticketSla.slaPolicy.businessHours
+      ticketSla.slaPolicy.slaCalendar.businessHours,
     );
 
     /**

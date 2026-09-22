@@ -142,6 +142,7 @@ model Organization {
   activities          Activity[]
   notifications       Notification[]
   slaPolicies         SlaPolicy[]
+  slaCalendars        SlaCalendar[]
   workflows           Workflow[]
   workflowExecutions  WorkflowExecution[]
   auditLogs           AuditLog[]
@@ -376,7 +377,6 @@ model TicketSla {
   slaPolicy SlaPolicy @relation(fields: [slaPolicyId], references: [id], onDelete: Restrict)
 
   ticketSlaPauses TicketSlaPause[]
-  
 
   @@index([slaPolicyId])
   @@index([firstResponseStatus])
@@ -569,10 +569,12 @@ model TicketStatusHistory {
 }
 
 model SlaPolicy {
-  id             String  @id @default(uuid()) @db.Uuid
-  organizationId String  @db.Uuid
-  name           String  @db.VarChar(100)
-  description    String? @db.Text
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  slaCalendarId  String @db.Uuid
+
+  name        String  @db.VarChar(100)
+  description String? @db.Text
 
   priority Priority
 
@@ -586,13 +588,15 @@ model SlaPolicy {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  tickets         Ticket[]
-  ticketSlas      TicketSla[]
-  businessHours   SlaBusinessHour[]
+  slaCalendar SlaCalendar @relation(fields: [slaCalendarId], references: [id], onDelete: Restrict)
+
+  tickets    Ticket[]
+  ticketSlas TicketSla[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
   @@index([organizationId, priority])
+  @@index([slaCalendarId])
   @@map("sla_policies")
 }
 
@@ -789,7 +793,7 @@ model Invitation {
 
 model PasswordResetToken {
   id     String @id @default(uuid()) @db.Uuid
-  userId String   @db.Uuid
+  userId String @db.Uuid
 
   tokenHash String    @unique @db.VarChar(255)
   expiresAt DateTime
@@ -807,12 +811,12 @@ model PasswordResetToken {
 }
 
 model TicketSlaPause {
-  id              String   @id @default(uuid()) @db.Uuid
-  ticketSlaId     String   @db.Uuid
+  id              String    @id @default(uuid()) @db.Uuid
+  ticketSlaId     String    @db.Uuid
   startedAt       DateTime
   endedAt         DateTime?
   durationSeconds BigInt?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime  @default(now())
 
   ticketSla TicketSla @relation(fields: [ticketSlaId], references: [id], onDelete: Cascade)
 
@@ -821,16 +825,40 @@ model TicketSlaPause {
 }
 
 model SlaBusinessHour {
-  id          String @id @default(uuid()) @db.Uuid
-  slaPolicyId String @db.Uuid
+  id            String @id @default(uuid()) @db.Uuid
+  slaCalendarId String @db.Uuid
 
-  dayOfWeek  Int
-  startTime  String @db.VarChar(5)
-  endTime    String @db.VarChar(5)
+  dayOfWeek Int
+  startTime String @db.VarChar(5)
+  endTime   String @db.VarChar(5)
 
-  slaPolicy SlaPolicy @relation(fields: [slaPolicyId], references: [id], onDelete: Cascade)
+  slaCalendar SlaCalendar @relation(fields: [slaCalendarId], references: [id], onDelete: Cascade)
 
-  @@unique([slaPolicyId, dayOfWeek])
-  @@index([slaPolicyId])
+  @@unique([slaCalendarId, dayOfWeek])
+  @@index([slaCalendarId])
   @@map("sla_business_hours")
+}
+
+model SlaCalendar {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+
+  name        String  @db.VarChar(100)
+  description String? @db.Text
+  timezone    String  @default("UTC") @db.VarChar(50)
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  slaPolicies   SlaPolicy[]
+  businessHours SlaBusinessHour[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@index([organizationId, isActive])
+  @@map("sla_calendars")
 }
