@@ -1,14 +1,14 @@
-import { type PrismaClient, type Prisma } from "@prisma/client";
+import { type PrismaClient, type Prisma, TicketStatus } from "@prisma/client";
 
 import { AppError } from "../../common/errors/app-error.js";
 import {
-  calculateElapsedTime,
   evaluateEffectiveSlaStatus,
 } from "./sla-policy.calculator.js";
 import { calculateElapsedWorkTime } from "./sla-business-hours.calculator.js";
+import { SlaSweepError, type SlaSweepFailure } from "./sla-sweep.error.js";
 
 export class SlaService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient) { }
 
   async evaluateTicketSla(ticketId: string) {
     const ticketSla = await this.prisma.ticketSla.findUnique({
@@ -277,4 +277,69 @@ export class SlaService {
       },
     });
   }
+
+
+
+  async evaluateDueTicketSlas(): Promise<number> {
+    let lastId: string | undefined;
+    let processed = 0;
+    const failures: SlaSweepFailure[] = [];
+
+    while (true) {
+      const ticketSlas = await this.prisma.ticketSla.findMany({
+        where: {
+          OR: [
+            { firstResponseAt: null },
+            {
+              resolvedAt: null,
+              resolutionDueAt: { not: null },
+            },
+          ],
+          ticket: {
+            is: {
+              status: { not: TicketStatus.CLOSED },
+            },
+          },
+        },
+        orderBy: { id: "asc" },
+        ...(lastId ? { cursor: { id: lastId }, skip: 1 } : {}),
+        take: 100,
+      });
+
+      if (ticketSlas.length === 0) {
+        break;
+      }
+
+      for (const ticketSla of ticketSlas) {
+        try {
+          await this.evaluateTicketSla(ticketSla.ticketId);
+          processed++;
+        } catch (error) {
+          failures.push({
+            ticketId: ticketSla.ticketId,
+            slaId: ticketSla.id,
+            error,
+          });
+        }
+      }
+
+      if (ticketSlas.length < 100) {
+        break;
+      }
+
+      const lastTicketSla = ticketSlas.at(-1);
+      if (!lastTicketSla) {
+        break;
+      }
+      lastId = lastTicketSla.id;
+    }
+
+    if (failures.length > 0) {
+      throw new SlaSweepError(processed, failures);
+    }
+
+    return processed;
+  }
+
+
 }
