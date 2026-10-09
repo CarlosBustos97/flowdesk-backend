@@ -856,9 +856,25 @@ model SlaCalendar {
 
   slaPolicies   SlaPolicy[]
   businessHours SlaBusinessHour[]
+  holidays SlaHoliday[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
   @@index([organizationId, isActive])
   @@map("sla_calendars")
+}
+
+model SlaHoliday {
+  id              String @id @default(uuid()) @db.Uuid
+  slaCalendarId   String @db.Uuid
+  name            String @db.VarChar(100)
+  date            DateTime @db.Date
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  slaCalendar SlaCalendar @relation(fields: [slaCalendarId], references: [id], onDelete: Cascade)
+
+  @@unique([slaCalendarId, date])
+  @@index([slaCalendarId])
+  @@map("sla_holidays")
 }
