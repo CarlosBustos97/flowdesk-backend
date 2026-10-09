@@ -250,11 +250,17 @@ export class TicketService {
         isActive: true,
         slaCalendar: {
           select: {
+            timezone: true,
             businessHours: {
               select: {
                 dayOfWeek: true,
                 startTime: true,
                 endTime: true,
+              },
+            },
+            holidays: {
+              select: {
+                date: true,
               },
             },
           },
@@ -279,6 +285,8 @@ export class TicketService {
       slaPolicy,
       openedAt,
       slaPolicy.slaCalendar.businessHours,
+      slaPolicy.slaCalendar.holidays,
+      slaPolicy.slaCalendar.timezone,
     );
 
     const ticketData = {

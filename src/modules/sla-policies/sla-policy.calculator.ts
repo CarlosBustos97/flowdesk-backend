@@ -1,5 +1,8 @@
 import type { Priority, SlaStatus } from "@prisma/client";
-import { addBusinessTime } from "./sla-business-hours.calculator.js";
+import {
+  addBusinessTime,
+  type SlaHolidayForCalculation,
+} from "./sla-business-hours.calculator.js";
 
 export type SlaPolicyForCalculation = {
   id: string;
@@ -22,19 +25,33 @@ export type SlaBusinessHourForCalculation = {
 export function calculateSlaDueDates(
   slaPolicy: SlaPolicyForCalculation,
   openedAt: Date,
-  businessHours?: SlaBusinessHourForCalculation[],
+  businessHours: SlaBusinessHourForCalculation[],
+  holidays: SlaHolidayForCalculation[],
+  timeZone: string,
 ): SlaDueDates {
-  const firstResponseDueAt =
-    businessHours != undefined && businessHours.length > 0
-      ? addBusinessTime(openedAt, slaPolicy.firstResponseMinutes, businessHours)
-      : new Date(
-          openedAt.getTime() + slaPolicy.firstResponseMinutes * 60 * 1000,
-        );
+  const usesBusinessCalendar = businessHours.length > 0;
 
-  const resolutionDueAt =
-    businessHours != undefined && businessHours.length > 0
-      ? addBusinessTime(openedAt, slaPolicy.resolutionMinutes, businessHours)
-      : new Date(openedAt.getTime() + slaPolicy.resolutionMinutes * 60 * 1000);
+  const firstResponseDueAt = usesBusinessCalendar
+    ? addBusinessTime(
+        openedAt,
+        slaPolicy.firstResponseMinutes,
+        businessHours,
+        holidays,
+        timeZone,
+      )
+    : new Date(
+        openedAt.getTime() + slaPolicy.firstResponseMinutes * 60 * 1000,
+      );
+
+  const resolutionDueAt = usesBusinessCalendar
+    ? addBusinessTime(
+        openedAt,
+        slaPolicy.resolutionMinutes,
+        businessHours,
+        holidays,
+        timeZone,
+      )
+    : new Date(openedAt.getTime() + slaPolicy.resolutionMinutes * 60 * 1000);
 
   return {
     firstResponseDueAt,

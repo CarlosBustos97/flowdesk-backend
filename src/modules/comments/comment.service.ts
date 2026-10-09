@@ -118,8 +118,12 @@ export class CommentService {
               firstResponseMinutes: true,
               slaCalendar: {
                 select: {
+                  timezone: true,
                   businessHours: {
                     select: { dayOfWeek: true, startTime: true, endTime: true },
+                  },
+                  holidays: {
+                    select: { date: true },
                   },
                 },
               },
@@ -142,7 +146,9 @@ export class CommentService {
           ticketSla.ticket.openedAt,
           createdComment.createdAt,
           ticketSla.ticketSlaPauses,
-          ticketSla.slaPolicy.slaCalendar.businessHours
+          ticketSla.slaPolicy.slaCalendar.businessHours,
+          ticketSla.slaPolicy.slaCalendar.holidays,
+          ticketSla.slaPolicy.slaCalendar.timezone,
         );
 
         const firstResponseStatus = evaluateEffectiveSlaStatus(
