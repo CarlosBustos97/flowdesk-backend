@@ -4,6 +4,10 @@ export type SlaBusinessHourForCalculation = {
   endTime: string;
 };
 
+export type SlaHolidayForCalculation = {
+  date: Date;
+};
+
 export type TicketSlaPauseForCalculation = {
   startedAt: Date;
   endedAt: Date | null;
@@ -13,6 +17,7 @@ export function calculateBusinessTime(
   startAt: Date,
   endAt: Date,
   businessHours: SlaBusinessHourForCalculation[],
+  holidays: SlaHolidayForCalculation[] = [],
 ): number {
   if (endAt <= startAt) return 0;
 
@@ -22,6 +27,11 @@ export function calculateBusinessTime(
 
   while (currentDate < endAt) {
     const dayOfWeek = currentDate.getDay() === 0 ? 7 : currentDate.getDay();
+
+    if (isHoliday(currentDate, holidays)) {
+      currentDate.setDate(currentDate.getDate() + 1);
+      continue;
+    }
 
     const businessHour = businessHours.find(
       (hour) => hour.dayOfWeek === dayOfWeek,
@@ -70,6 +80,7 @@ export function addBusinessTime(
   startAt: Date,
   businessMinutes: number,
   businessHours: SlaBusinessHourForCalculation[],
+  holidays: SlaHolidayForCalculation[] = [],
 ): Date {
   if (businessMinutes <= 0) {
     return new Date(startAt);
@@ -80,6 +91,12 @@ export function addBusinessTime(
 
   while (remainingMs > 0) {
     const dayOfWeek = currentDate.getDay() === 0 ? 7 : currentDate.getDay();
+
+    if (isHoliday(currentDate, holidays)) {
+      currentDate.setDate(currentDate.getDate() + 1);
+      currentDate.setHours(0, 0, 0, 0);
+      continue;
+    }
 
     const businessHour = businessHours.find(
       (hour) => hour.dayOfWeek === dayOfWeek,
@@ -144,20 +161,39 @@ export function calculateElapsedWorkTime(
   now: Date,
   TicketSlaPauseForCalculation: TicketSlaPauseForCalculation[],
   businessHours: SlaBusinessHourForCalculation[],
+  holidays: SlaHolidayForCalculation[] = [],
 ): number {
-  const workingTime = calculateBusinessTime(openAt, now, businessHours);
+  const workingTime = calculateBusinessTime(
+    openAt,
+    now,
+    businessHours,
+    holidays,
+  );
 
-  const workTimePause = TicketSlaPauseForCalculation.reduce((totalPauseWorkTime, pause) => {
-    const pauseEnd = pause.endedAt ?? now;
-    const pausedTime = calculateBusinessTime(
-      pause.startedAt,
-      pauseEnd,
-      businessHours,
-    );
-    return totalPauseWorkTime + pausedTime;
-  }, 0);
+  const workTimePause = TicketSlaPauseForCalculation.reduce(
+    (totalPauseWorkTime, pause) => {
+      const pauseEnd = pause.endedAt ?? now;
+      const pausedTime = calculateBusinessTime(
+        pause.startedAt,
+        pauseEnd,
+        businessHours,
+        holidays,
+      );
+      return totalPauseWorkTime + pausedTime;
+    },
+    0,
+  );
 
   const effectiveWorkTime = workingTime - workTimePause;
 
   return Math.max(0, effectiveWorkTime);
+}
+
+function isHoliday(date: Date, holidays: SlaHolidayForCalculation[]): boolean {
+  return holidays.some(
+    (holiday) =>
+      holiday.date.getUTCFullYear() === date.getFullYear() &&
+      holiday.date.getUTCMonth() === date.getMonth() &&
+      holiday.date.getUTCDate() === date.getDate(),
+  );
 }
