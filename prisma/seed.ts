@@ -299,6 +299,32 @@ const PERMISSIONS = [
     description: "Update SLA calendar",
     module: "tickets",
   },
+
+  // Notifications
+  {
+    code: "notifications.list",
+    name: "View notifications",
+    description: "View notifications",
+    module: "notifications",
+  },
+  {
+    code: "notifications.count-unread",
+    name: "Count unread notifications",
+    description: "Count unread notifications",
+    module: "notifications",
+  },
+  {
+    code: "notifications.mark-as-read",
+    name: "Mark notification as read",
+    description: "Mark notification as read",
+    module: "notifications",
+  },
+  {
+    code: "notifications.mark-all-as-read",
+    name: "Mark all notifications as read",
+    description: "Mark all notifications as read",
+    module: "notifications",
+  },
 ];
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -341,6 +367,10 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "sla_calendars.view",
     "sla_calendars.create",
     "sla_calendars.update",
+    "notifications.list",
+    "notifications.count-unread",
+    "notifications.mark-as-read",
+    "notifications.mark-all-as-read",
   ],
 
   MANAGER: [
@@ -372,6 +402,10 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "comments.delete",
     "attachments.view",
     "attachments.create",
+    "notifications.list",
+    "notifications.count-unread",
+    "notifications.mark-as-read",
+    "notifications.mark-all-as-read",
   ],
 
   AGENT: [
@@ -389,6 +423,10 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "comments.delete",
     "attachments.view",
     "attachments.create",
+    "notifications.list",
+    "notifications.count-unread",
+    "notifications.mark-as-read",
+    "notifications.mark-all-as-read",
   ],
 
   USER: [
@@ -400,6 +438,10 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "comments.create",
     "attachments.view",
     "attachments.create",
+    "notifications.list",
+    "notifications.count-unread",
+    "notifications.mark-as-read",
+    "notifications.mark-all-as-read",
   ],
 };
 

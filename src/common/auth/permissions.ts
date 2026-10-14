@@ -54,6 +54,12 @@ export const PERMISSIONS = {
   SLA_CALENDARS_VIEW: "sla_calendars.view",
   SLA_CALENDARS_CREATE: "sla_calendars.create",
   SLA_CALENDARS_UPDATE: "sla_calendars.update",
+
+  NOTIFICATIONS_LIST: "notifications.list",
+  NOTIFICATIONS_COUNT_UNREAD: "notifications.count-unread",
+  NOTIFICATIONS_MARK_AS_READ: "notifications.mark-as-read",
+  NOTIFICATIONS_MARK_ALL_AS_READ: "notifications.mark-all-as-read",
+
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
