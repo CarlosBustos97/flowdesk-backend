@@ -42,7 +42,7 @@ export async function notificationRoutes(app: FastifyInstance) {
   );
 
   app.patch<{ Params: NotificationReadParams }>(
-    "/notifications/mark-as-read",
+    "/notifications/:id/read",
     {
       schema: notificationReadSchema,
       preHandler: [
@@ -54,7 +54,7 @@ export async function notificationRoutes(app: FastifyInstance) {
   );
 
   app.patch(
-    "/notifications/mark-all-as-read",
+    "/notifications/read-all",
     {
       preHandler: [
         authGuard,

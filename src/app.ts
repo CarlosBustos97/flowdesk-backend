@@ -18,6 +18,7 @@ import { attachmentRoutes } from "./modules/attachments/attachment.routes.js";
 import { slaCalendarRoutes } from "./modules/sla-calendars/sla-calendar.routes.js";
 import { slaBusinessHourRoutes } from "./modules/sla-calendars/business-hours/sla-business-hour.routes.js";
 import { slaHolidayRoutes } from "./modules/sla-calendars/holidays/sla-holiday.routes.js";
+import { notificationRoutes } from "./modules/notifications/notification.routes.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -47,6 +48,7 @@ export async function buildApp() {
   await app.register(slaCalendarRoutes);
   await app.register(slaBusinessHourRoutes);
   await app.register(slaHolidayRoutes);
+  await app.register(notificationRoutes);
 
   return app;
 }
