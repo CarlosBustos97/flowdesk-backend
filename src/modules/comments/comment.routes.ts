@@ -19,10 +19,15 @@ import {
   commentListSchema,
   commentUpdateSchema,
 } from "./comment.schema.js";
+import { NotificationService } from "../notifications/notification.service.js";
 
 export async function commentRoutes(app: FastifyInstance) {
   const commentController = new CommentController(
-    new CommentService(app.prisma, app.authorizationService),
+    new CommentService(
+      app.prisma,
+      app.authorizationService,
+      new NotificationService(app.prisma),
+    ),
   );
 
   app.get<{ Params: CommentListParams; Querystring: CommentListQuery }>(

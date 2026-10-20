@@ -1,4 +1,8 @@
-import { TicketStatus, type PrismaClient } from "@prisma/client";
+import {
+  NotificationType,
+  TicketStatus,
+  type PrismaClient,
+} from "@prisma/client";
 import type AuthorizationService from "../auth/authorization.service.js";
 import type {
   CommentCreateBody,
@@ -14,11 +18,13 @@ import {
   evaluateEffectiveSlaStatus,
 } from "../sla-policies/sla-policy.calculator.js";
 import { calculateElapsedWorkTime } from "../sla-policies/sla-business-hours.calculator.js";
+import type { NotificationService } from "../notifications/notification.service.js";
 
 export class CommentService {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly authorizationService: AuthorizationService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async create(
@@ -57,7 +63,7 @@ export class CommentService {
      */
     if (
       data.isInternal &&
-      !(await this.authorizationService.canCreateInternalComment(
+      !(await this.authorizationService.canAccessInternalComments(
         requesterUserId,
         ticket.organizationId,
       ))
@@ -68,7 +74,45 @@ export class CommentService {
       );
 
     /**
-     * 4. Crear el comentario
+     * 4. Obtener los IDs de los usuarios que recibirán la notificación
+     */
+    const recipientIds = [ticket.createdById, ticket.assignedToId].filter(
+      (userId): userId is string =>
+        userId !== null && userId !== requesterUserId,
+    );
+
+    const uniqueRecipientIds = [...new Set(recipientIds)];
+
+    const recipients = await this.prisma.user.findMany({
+      where: {
+        id: { in: uniqueRecipientIds },
+        organizationId: ticket.organizationId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    let recipientsIds = recipients.map((user) => user.id);
+
+    if (data.isInternal) {
+      const authorizedRecipients = await Promise.all(
+        recipientIds.map(async (userId) => ({
+          userId,
+          allowed: await this.authorizationService.canAccessInternalComments(
+            userId,
+            ticket.organizationId,
+          ),
+        })),
+      );
+
+      recipientsIds = authorizedRecipients
+        .filter((recipient) => recipient.allowed)
+        .map((recipient) => recipient.userId);
+    }
+
+    /**
+     * 5. Crear el comentario
      */
     const comment = await this.prisma.$transaction(async (tx) => {
       const createdComment = await tx.comment.create({
@@ -95,7 +139,29 @@ export class CommentService {
       });
 
       /**
-       * 5. Registrar primera respuesta del SLA
+       * 6. Enviar notificación a los usuarios que recibirán la notificación
+       */
+      for (const userId of recipientsIds) {
+        await this.notificationService.create(
+          {
+            organizationId: ticket.organizationId,
+            userId,
+            type: NotificationType.COMMENT_ADDED,
+            title: createdComment.isInternal
+              ? "Nota interna"
+              : "Nuevo comentario",
+            message: createdComment.isInternal
+              ? `Se ha añadido una nota interna en el ticket ${ticket.subject}.`
+              : `Hay un nuevo comentario en el ticket ${ticket.subject}.`,
+            entityType: "ticket",
+            entityId: ticket.id,
+          },
+          tx,
+        );
+      }
+
+      /**
+       * 7. Registrar primera respuesta del SLA
        *
        * Los comentarios internos no cuentan como respuesta al cliente.
        */
@@ -209,7 +275,17 @@ export class CommentService {
 
     if (!ticket) throw new AppError(404, "Ticket not found");
 
-    const where = { ticketId: ticket.id, deletedAt: null };
+    const canAccessInternalComments =
+      await this.authorizationService.canAccessInternalComments(
+        requesterUserId,
+        ticket.organizationId,
+      );
+
+    const where = {
+      ticketId: ticket.id,
+      deletedAt: null,
+      ...(canAccessInternalComments ? {} : { isInternal: false }),
+    };
 
     const [comments, total] = await this.prisma.$transaction([
       this.prisma.comment.findMany({
@@ -221,6 +297,7 @@ export class CommentService {
           ticketId: true,
           userId: true,
           content: true,
+          isInternal: true,
           createdAt: true,
           updatedAt: true,
           user: {

@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { AppError } from "../../common/errors/app-error.js";
 import type {
@@ -9,8 +9,8 @@ import type {
 export class NotificationService {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async create(data: NotificationCreateInput) {
-    return this.prisma.notification.create({
+  async create(data: NotificationCreateInput, tx: Prisma.TransactionClient) {
+    return tx.notification.create({
       data: {
         organizationId: data.organizationId,
         userId: data.userId,

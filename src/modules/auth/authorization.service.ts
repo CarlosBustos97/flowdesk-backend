@@ -221,7 +221,7 @@ export default class AuthorizationService {
     return false;
   }
 
-  async canCreateInternalComment(
+  async canAccessInternalComments(
     userId: string,
     organizationId: string,
   ): Promise<boolean> {

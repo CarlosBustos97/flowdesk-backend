@@ -1,9 +1,12 @@
 import {
   CustomerStatus,
+  NotificationType,
+  Prisma,
   SlaStatus,
   TicketStatus,
   UserStatus,
   type PrismaClient,
+  type Ticket,
 } from "@prisma/client";
 import type AuthorizationService from "../auth/authorization.service.js";
 import type {
@@ -15,12 +18,20 @@ import { AUTH_SCOPES } from "../../common/auth/auth-scope.js";
 import { AppError } from "../../common/errors/app-error.js";
 import { calculateSlaDueDates } from "../sla-policies/sla-policy.calculator.js";
 import type { SlaService } from "../sla-policies/sla.service.js";
+import type { NotificationService } from "../notifications/notification.service.js";
+type TicketStatusAction = "start" | "pending" | "resolve" | "close" | "reopen";
+type UpdatedTicket = {
+  id: string;
+  organizationId: string;
+  status: TicketStatus;
+};
 
 export class TicketService {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly authorizationService: AuthorizationService,
     private readonly slaService: SlaService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async list(
@@ -513,32 +524,57 @@ export class TicketService {
     /**
      * 9. Actualizar ticket
      */
-    const ticket = await this.prisma.ticket.update({
-      where: { id: ticketId },
-      data: ticketData,
-      select: {
-        id: true,
-        subject: true,
-        description: true,
-        status: true,
-        priority: true,
-        openedAt: true,
-        resolvedAt: true,
-        closedAt: true,
-        slaDueAt: true,
-        firstResponseAt: true,
-        createdAt: true,
-        updatedAt: true,
-        organization: { select: { id: true, name: true, slug: true } },
-        customer: { select: { id: true, name: true, email: true } },
-        project: { select: { id: true, name: true } },
-        category: { select: { id: true, name: true } },
-        assignedTo: { select: { id: true, name: true, email: true } },
-        slaPolicy: { select: { id: true, name: true } },
-      },
+    const ticketUpdated = await this.prisma.$transaction(async (tx) => {
+      const ticket = await tx.ticket.update({
+        where: { id: ticketId },
+        data: ticketData,
+        select: {
+          id: true,
+          subject: true,
+          description: true,
+          status: true,
+          priority: true,
+          openedAt: true,
+          resolvedAt: true,
+          closedAt: true,
+          slaDueAt: true,
+          firstResponseAt: true,
+          createdAt: true,
+          updatedAt: true,
+          assignedToId: true,
+          organizationId: true,
+          organization: { select: { id: true, name: true, slug: true } },
+          customer: { select: { id: true, name: true, email: true } },
+          project: { select: { id: true, name: true } },
+          category: { select: { id: true, name: true } },
+          assignedTo: { select: { id: true, name: true, email: true } },
+          slaPolicy: { select: { id: true, name: true } },
+        },
+      });
+
+      if (
+        ticket.assignedToId &&
+        ticket.assignedToId !== requesterUserId &&
+        ticket.assignedToId !== existingTicket.assignedToId
+      ) {
+        await this.notificationService.create(
+          {
+            organizationId: ticket.organization.id,
+            userId: ticket.assignedToId,
+            type: NotificationType.TICKET_ASSIGNED,
+            title: "Ticket asignado",
+            message: `El ticket ${ticket.subject} le ha sido asignado.`,
+            entityType: "ticket",
+            entityId: ticket.id,
+          },
+          tx,
+        );
+      }
+
+      return ticket;
     });
 
-    return ticket;
+    return ticketUpdated;
   }
 
   async start(
@@ -552,6 +588,10 @@ export class TicketService {
       requesterUserId,
       requesterOrganizationId,
       [TicketStatus.OPEN, TicketStatus.WAITING_CUSTOMER],
+      "Ticket en progreso",
+      "El ticket ha sido marcado como en progreso.",
+      NotificationType.TICKET_UPDATED,
+      "start",
     );
   }
 
@@ -566,6 +606,10 @@ export class TicketService {
       requesterUserId,
       requesterOrganizationId,
       [TicketStatus.IN_PROGRESS],
+      "Ticket pendiente",
+      "El ticket ha sido marcado como pendiente.",
+      NotificationType.TICKET_UPDATED,
+      "pending",
     );
   }
 
@@ -580,6 +624,10 @@ export class TicketService {
       requesterUserId,
       requesterOrganizationId,
       [TicketStatus.OPEN, TicketStatus.IN_PROGRESS],
+      "Ticket resuelto",
+      "El ticket ha sido resuelto.",
+      NotificationType.TICKET_RESOLVED,
+      "resolve",
     );
   }
 
@@ -594,6 +642,10 @@ export class TicketService {
       requesterUserId,
       requesterOrganizationId,
       [TicketStatus.RESOLVED],
+      "Ticket cerrado",
+      "El ticket ha sido cerrado.",
+      NotificationType.TICKET_UPDATED,
+      "close",
     );
   }
 
@@ -608,6 +660,10 @@ export class TicketService {
       requesterUserId,
       requesterOrganizationId,
       [TicketStatus.RESOLVED],
+      "Ticket reabierto",
+      "El ticket ha sido reabierto.",
+      NotificationType.TICKET_UPDATED,
+      "reopen",
     );
   }
 
@@ -649,6 +705,10 @@ export class TicketService {
     requesterUserId: string,
     requesterOrganizationId: string,
     expectedFromStatus: TicketStatus[],
+    title: string,
+    message: string,
+    notificationType: NotificationType,
+    action: TicketStatusAction,
   ) {
     const scope = await this.authorizationService.getScope(requesterUserId);
 
@@ -698,6 +758,8 @@ export class TicketService {
           firstResponseAt: true,
           createdAt: true,
           updatedAt: true,
+          assignedToId: true,
+          organizationId: true,
           organization: { select: { id: true, name: true, slug: true } },
           customer: { select: { id: true, name: true, email: true } },
           project: { select: { id: true, name: true } },
@@ -737,9 +799,57 @@ export class TicketService {
       )
         await this.slaService.endPause(ticketId, date, tx);
 
+      await this.sendNotification(
+        existingTicket,
+        updateTicket,
+        requesterUserId,
+        title,
+        message,
+        notificationType,
+        tx,
+        action,
+      );
+
       return updateTicket;
     });
 
     return ticket;
+  }
+
+  private async sendNotification(
+    existingTicket: Ticket,
+    updatedTicket: UpdatedTicket,
+    requesterUserId: string,
+    title: string,
+    message: string,
+    notificationType: NotificationType,
+    tx: Prisma.TransactionClient,
+    action: TicketStatusAction,
+  ) {
+    const recipientUserIdMap: Record<TicketStatusAction, string | null> = {
+      start: existingTicket.assignedToId ?? null,
+      pending: existingTicket.createdById ?? null,
+      resolve: existingTicket.createdById ?? null,
+      close: existingTicket.createdById ?? null,
+      reopen: existingTicket.assignedToId ?? null,
+    };
+
+    const recipientUserId = recipientUserIdMap[action];
+    if (!recipientUserId) return;
+    if (updatedTicket.status === existingTicket.status) return;
+    if (recipientUserId === requesterUserId) return;
+
+    await this.notificationService.create(
+      {
+        organizationId: updatedTicket.organizationId,
+        userId: recipientUserId,
+        type: notificationType,
+        title: title,
+        message: message,
+        entityType: "ticket",
+        entityId: updatedTicket.id,
+      },
+      tx,
+    );
   }
 }

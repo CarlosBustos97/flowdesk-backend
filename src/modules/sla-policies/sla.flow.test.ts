@@ -8,6 +8,7 @@ import {
 import type AuthorizationService from "../auth/authorization.service.js";
 import { AppError } from "../../common/errors/app-error.js";
 import { CommentService } from "../comments/comment.service.js";
+import type { NotificationService } from "../notifications/notification.service.js";
 import { TicketService } from "../tickets/ticket.service.js";
 import { SlaService } from "./sla.service.js";
 import type { SlaBusinessHourForCalculation } from "./sla-business-hours.calculator.js";
@@ -77,6 +78,8 @@ function createFlow() {
   const ticket = {
     id: "ticket-1",
     organizationId: "org-1",
+    createdById: "user-1",
+    assignedToId: null as string | null,
     subject: "Impresora",
     description: "Se atasca",
     status: TicketStatus.OPEN,
@@ -141,6 +144,9 @@ function createFlow() {
   const db = {
     organization: {
       findUnique: async () => ({ id: "org-1" }),
+    },
+    user: {
+      findMany: async () => [],
     },
     customer: {
       findFirst: async () => ({
@@ -254,14 +260,26 @@ function createFlow() {
 
   const authorization = {
     getScope: async () => "GLOBAL",
-    canCreateInternalComment: async () => true,
+    canAccessInternalComments: async () => true,
   } as unknown as AuthorizationService;
 
   const prisma = db as unknown as PrismaClient;
   const tx = db as unknown as Parameters<SlaService["endPause"]>[2];
   const slaService = new SlaService(prisma);
-  const ticketService = new TicketService(prisma, authorization, slaService);
-  const commentService = new CommentService(prisma, authorization);
+  const notificationService = {
+    create: async () => ({ id: "notification-1" }),
+  } as unknown as NotificationService;
+  const ticketService = new TicketService(
+    prisma,
+    authorization,
+    slaService,
+    notificationService,
+  );
+  const commentService = new CommentService(
+    prisma,
+    authorization,
+    notificationService,
+  );
 
   return {
     tx,

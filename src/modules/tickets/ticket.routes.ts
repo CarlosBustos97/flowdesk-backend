@@ -18,12 +18,18 @@ import { authGuard } from "../auth/auth.guard.js";
 import { requirePermission } from "../../common/guards/permission.guard.js";
 import { PERMISSIONS } from "../../common/auth/permissions.js";
 import { SlaService } from "../sla-policies/sla.service.js";
+import { NotificationService } from "../notifications/notification.service.js";
 
 export async function ticketRoutes(app: FastifyInstance) {
   const slaService = new SlaService(app.prisma);
 
   const ticketController = new TicketController(
-    new TicketService(app.prisma, app.authorizationService, slaService),
+    new TicketService(
+      app.prisma,
+      app.authorizationService,
+      slaService,
+      new NotificationService(app.prisma),
+    ),
     slaService,
   );
 
