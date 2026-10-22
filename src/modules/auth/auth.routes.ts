@@ -3,8 +3,6 @@ import { AuthService } from "./auth.service.js";
 import { loginSchema } from "./auth.schema.js";
 import { AuthController } from "./auth.controller.js";
 import { authGuard } from "./auth.guard.js";
-import { requirePermission } from "../../common/guards/permission.guard.js";
-import { PERMISSIONS } from "../../common/auth/permissions.js";
 
 export async function authRoutes(app: FastifyInstance) {
   const authController = new AuthController(

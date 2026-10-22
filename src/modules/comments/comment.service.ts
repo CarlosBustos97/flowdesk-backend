@@ -6,17 +6,12 @@ import {
 import type AuthorizationService from "../auth/authorization.service.js";
 import type {
   CommentCreateBody,
-  CommentCreateParams,
-  CommentListParams,
   CommentListQuery,
   CommentUpdateBody,
 } from "./comment.types.js";
 import { AUTH_SCOPES } from "../../common/auth/auth-scope.js";
 import { AppError } from "../../common/errors/app-error.js";
-import {
-  calculateElapsedTime,
-  evaluateEffectiveSlaStatus,
-} from "../sla-policies/sla-policy.calculator.js";
+import { evaluateEffectiveSlaStatus } from "../sla-policies/sla-policy.calculator.js";
 import { calculateElapsedWorkTime } from "../sla-policies/sla-business-hours.calculator.js";
 import type { NotificationService } from "../notifications/notification.service.js";
 import type { AuditLogService } from "../audit-logs/audit-log.service.js";

@@ -34,7 +34,7 @@ Fuera de este cierre: tasks, correo, invitaciones, reset de contraseña, prefere
 - [x] **Fase 4.** Informes por consulta, sin cola. Completada.
 - [x] **Fase 5.** API keys. Completada.
 - [x] **Fase 6.** Revisión integral y concurrencia del SLA. Completada.
-- [ ] **Fase 7.** ESLint y CI.
+- [x] **Fase 7.** ESLint y CI. Completada.
 - [ ] **Fase 8.** README y arranque local.
 
 ## Decisiones ya tomadas
@@ -213,7 +213,7 @@ A mano: cambia el nombre de un usuario y `GET /audit-logs` con su token. Debe sa
 
 ## Fase 7. CI y lint
 
-**Estado:** pendiente.
+**Estado:** completada. Reporte: [implementations/fase-7-eslint.md](../implementations/fase-7-eslint.md). No hay remoto, así que no hay workflow.
 
 **Objetivo.** `npm run lint` tiene configuración. Si el remoto es GitHub, un workflow ejecuta `npm ci`, `npx tsc --noEmit` y `npx vitest run`, sin Postgres.
 

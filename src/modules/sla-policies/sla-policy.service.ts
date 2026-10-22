@@ -4,7 +4,6 @@ import type {
   PolicyUpdateBody,
   PolicyCreateBody,
   PolicyListQuery,
-  PolicyShowParams,
 } from "./sla-policy.types.js";
 import { AUTH_SCOPES } from "../../common/auth/auth-scope.js";
 import { AppError } from "../../common/errors/app-error.js";

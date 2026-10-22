@@ -1,12 +1,9 @@
-import type { PrismaClient, SlaBusinessHour } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import type AuthorizationService from "../../auth/authorization.service.js";
 import { AUTH_SCOPES } from "../../../common/auth/auth-scope.js";
 import { AppError } from "../../../common/errors/app-error.js";
 import { DEFAULT_SLA_BUSINESS_HOURS } from "../../sla-policies/sla-business-hours.defaults.js";
-import type {
-  SlaBusinessHourInput,
-  SlaBusinessHoursUpdateBody,
-} from "./sla-business-hour.types.js";
+import type { SlaBusinessHoursUpdateBody } from "./sla-business-hour.types.js";
 
 export class SlaBusinessHourService {
   constructor(

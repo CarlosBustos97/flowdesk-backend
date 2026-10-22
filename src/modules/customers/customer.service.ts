@@ -129,7 +129,7 @@ export class CustomerService {
      * 1. Determinar la organización a la que pertenece el usuario solicitante..
      */
 
-    let organizationId = data.organizationId;
+    const organizationId = data.organizationId;
 
     if (scope === AUTH_SCOPES.ORGANIZATION) {
       if (data.organizationId !== requesterOrganizationId) {
