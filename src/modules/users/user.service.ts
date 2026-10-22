@@ -314,7 +314,27 @@ export class UserService {
     }
 
     /*
-     * 2. Validar email si viene en la actualización.
+     * 2. El PATCH usa el mismo rango que desactivar.
+     *    Uno mismo no puede cambiarse el status.
+     */
+    if (existingUser.id === requesterUserId) {
+      if (data.status !== undefined && data.status !== existingUser.status) {
+        throw new AppError(403, "You cannot disable yourself");
+      }
+    } else {
+      const canDisable = await this.authorizationService.canDisableUser(
+        requesterUserId,
+        requesterOrganizationId,
+        existingUser.id,
+      );
+
+      if (!canDisable) {
+        throw new AppError(403, "You cannot update this user");
+      }
+    }
+
+    /*
+     * 3. Validar email si viene en la actualización.
      */
     if (data.email && data.email !== existingUser.email) {
       const emailExists = await this.prisma.user.findFirst({
@@ -333,7 +353,7 @@ export class UserService {
     }
 
     /*
-     * 3. Validar el nuevo rol.
+     * 4. Validar el nuevo rol.
      */
     let newRole = null;
 
