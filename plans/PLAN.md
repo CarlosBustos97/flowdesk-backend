@@ -28,7 +28,7 @@ Fuera de este cierre: tasks, correo, invitaciones, reset de contraseña, prefere
 ## Estado de las fases
 
 - [x] **Fase 0.** Seguridad e integridad. Completada.
-- [ ] **Fase 1.** Dejar Vitest en verde (prueba del scheduler).
+- [x] **Fase 1.** Dejar Vitest en verde (prueba del scheduler). Completada.
 - [ ] **Fase 2.** Audit log.
 - [ ] **Fase 3.** Workflows mínimos.
 - [ ] **Fase 4.** Informes por consulta, sin cola.
@@ -90,7 +90,7 @@ A mano, con la API levantada (`docker compose up -d`, migraciones, seed y `npm r
 
 ## Fase 1. Suite en verde
 
-**Estado:** pendiente.
+**Estado:** completada. Reporte: [implementations/fase-1-suite-en-verde.md](../implementations/fase-1-suite-en-verde.md).
 
 **Prioridad:** P1. No es un bug de producción. Hace falta para ver regresiones.
 

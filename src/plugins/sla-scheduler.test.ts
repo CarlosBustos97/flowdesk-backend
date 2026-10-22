@@ -110,23 +110,33 @@ describe("scheduler periódico de SLA", () => {
     app = Fastify({
       logger: { level: "info", stream: logStream(entries) },
     });
-    app.decorate(
-      "prisma",
-      {
-        ticketSla: {
-          findMany: async (): Promise<FindManyResult> => [
-            { id: "sla-1", ticketId: "ticket-1" },
-            { id: "sla-2", ticketId: "ticket-2" },
-          ],
-          findUnique: async (args: { where: { ticketId: string } }) =>
-            evaluableTicketSla(args.where.ticketId),
-          update: async (args: { where: { ticketId: string } }) => {
-            evaluated.push(args.where.ticketId);
-            return { ticketId: args.where.ticketId };
-          },
+    const prisma = {
+      ticketSla: {
+        findMany: async (): Promise<FindManyResult> => [
+          { id: "sla-1", ticketId: "ticket-1" },
+          { id: "sla-2", ticketId: "ticket-2" },
+        ],
+        findUnique: async (args: { where: { ticketId: string } }) =>
+          evaluableTicketSla(args.where.ticketId),
+        update: async (args: { where: { ticketId: string } }) => {
+          evaluated.push(args.where.ticketId);
+          return {
+            id: args.where.ticketId,
+            ticket: {
+              id: args.where.ticketId,
+              organizationId: "org-1",
+              assignedToId: null,
+            },
+          };
         },
-      } as unknown as PrismaClient,
-    );
+      },
+      slaAlertEvent: {
+        createMany: async () => ({ count: 0 }),
+      },
+      $transaction: async (callback: (tx: unknown) => Promise<unknown>) =>
+        callback(prisma),
+    };
+    app.decorate("prisma", prisma as unknown as PrismaClient);
 
     await app.register(slaScheduler);
     await flushMicrotasks();
