@@ -1,4 +1,4 @@
-import { PrismaClient, UserStatus } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { Redis } from "ioredis";
 import crypto from "node:crypto";
@@ -12,16 +12,27 @@ export class AuthService {
     private readonly redis: Redis,
   ) {}
 
-  async login(email: string, password: string): Promise<LoginResponse> {
+  async login(
+    email: string,
+    password: string,
+    organizationSlug: string,
+  ): Promise<LoginResponse> {
+    const organization = await this.prisma.organization.findUnique({
+      where: { slug: organizationSlug },
+    });
+
+    if (!organization) throw new AppError(401, "Invalid credentials");
+
     const user = await this.prisma.user.findFirst({
-      where: { email, status: "ACTIVE" },
+      where: {
+        email,
+        organizationId: organization.id,
+        status: "ACTIVE",
+      },
     });
 
     if (!user) throw new AppError(401, "Invalid credentials");
-    
-    if (user.status === UserStatus.INACTIVE) {
-      throw new AppError(401, "Invalid credentials");
-    }
+
     const passwordMatch = await bcrypt.compare(password, user.passwordHash);
     if (!passwordMatch) throw new AppError(401, "Invalid credentials");
 

@@ -400,6 +400,18 @@ export class UserService {
         });
       }
 
+      /*
+       * 6. Una sesión solo vale mientras el usuario sigue ACTIVE.
+       *    DELETE /users/:id ya borraba las sesiones; el PATCH de status no.
+       */
+      if (data.status !== undefined && data.status !== UserStatus.ACTIVE) {
+        await tx.session.deleteMany({
+          where: {
+            userId: existingUser.id,
+          },
+        });
+      }
+
       return updatedUser;
     });
 

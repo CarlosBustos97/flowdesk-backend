@@ -1,7 +1,7 @@
 export const loginSchema = {
   body: {
     type: 'object',
-    required: ['email', 'password'],
+    required: ['email', 'password', 'organizationSlug'],
     additionalProperties: false,
     properties: {
       email: {
@@ -14,6 +14,11 @@ export const loginSchema = {
         type: 'string',
         minLength: 8,
         maxLength: 100,
+      },
+      organizationSlug: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 150,
       },
     },
   },

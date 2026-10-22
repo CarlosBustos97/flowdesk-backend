@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 
+import { UserStatus } from "@prisma/client";
 import type { FastifyRequest } from "fastify";
 import { AppError } from "../../common/errors/app-error.js";
 
@@ -29,6 +30,9 @@ export async function authGuard(request: FastifyRequest) {
 
   if (session.expiresAt <= new Date())
     throw new AppError(401, "Session expired");
+
+  if (session.user.status !== UserStatus.ACTIVE)
+    throw new AppError(401, "Invalid or expired session");
 
   request.user = {
     id: session.user.id,

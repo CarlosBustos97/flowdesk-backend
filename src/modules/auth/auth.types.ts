@@ -1,6 +1,7 @@
 export interface LoginBody {
   email: string;
   password: string;
+  organizationSlug: string;
 }
 
 export interface LoginResponse {

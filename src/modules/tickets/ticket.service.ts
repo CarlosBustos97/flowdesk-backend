@@ -776,6 +776,21 @@ export class TicketService {
         await this.slaService.resolveTicketSla(updateTicket.id, date, tx);
       }
 
+      /**
+       * 3.2 Reabrir deja la resolución otra vez en curso.
+       * La primera respuesta y las alertas ya creadas se conservan.
+       * El barrido vuelve a calcular resolutionStatus.
+       */
+      if (
+        existingTicket.status === TicketStatus.RESOLVED &&
+        status === TicketStatus.IN_PROGRESS
+      ) {
+        await tx.ticketSla.updateMany({
+          where: { ticketId: existingTicket.id },
+          data: { resolvedAt: null },
+        });
+      }
+
       await tx.ticketStatusHistory.create({
         data: {
           organizationId: existingTicket.organizationId,

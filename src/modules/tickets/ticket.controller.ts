@@ -140,6 +140,17 @@ export class TicketController {
     request: FastifyRequest<{ Params: TicketShowParams }>,
     reply: FastifyReply,
   ) {
+    /**
+     * La evaluación escribe estados y puede crear alertas.
+     * Primero se comprueba el mismo alcance que el detalle del ticket.
+     * El scheduler no pasa por aquí: sigue llamando al servicio directamente.
+     */
+    await this.ticketService.findById(
+      request.params.id,
+      request.user.id,
+      request.user.organizationId,
+    );
+
     const result = await this.slaService.evaluateTicketSla(request.params.id);
 
     return reply.status(200).send({ success: true, data: result });
