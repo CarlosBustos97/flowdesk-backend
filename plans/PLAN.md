@@ -7,7 +7,7 @@ Al cerrar una fase:
 1. Las pruebas de esa fase pasan.
 2. Este archivo marca la fase como completada y resume el resultado.
 3. Hay un commit solo con lo de esa fase.
-4. La respuesta explica qué se hizo, por qué, qué decisiones importan y cómo funciona el código.
+4. El reporte de la fase se guarda en `implementations/`, con el nombre de la fase. El de la fase 0 es [implementations/fase-0-seguridad-e-integridad.md](../implementations/fase-0-seguridad-e-integridad.md). Cada uno explica qué se hizo, por qué, qué decisiones importan, cómo funciona el código y cómo probarlo.
 5. No se arrastra trabajo de la fase siguiente.
 
 Para continuar, pide por ejemplo: «ejecuta la fase 1».
@@ -50,7 +50,7 @@ Fuera de este cierre: tasks, correo, invitaciones, reset de contraseña, prefere
 
 ## Fase 0. Seguridad e integridad
 
-**Estado:** completada.
+**Estado:** completada. Reporte: [implementations/fase-0-seguridad-e-integridad.md](../implementations/fase-0-seguridad-e-integridad.md).
 
 **Prioridad:** P0. Hacía falta antes de automatizar tickets.
 
