@@ -5,6 +5,7 @@ import {
   SlaStatus,
   TicketStatus,
   UserStatus,
+  WorkflowTriggerEvent,
   type PrismaClient,
   type Ticket,
 } from "@prisma/client";
@@ -20,6 +21,13 @@ import { calculateSlaDueDates } from "../sla-policies/sla-policy.calculator.js";
 import type { SlaService } from "../sla-policies/sla.service.js";
 import type { NotificationService } from "../notifications/notification.service.js";
 import type { AuditLogService } from "../audit-logs/audit-log.service.js";
+import type { WorkflowService } from "../workflows/workflow.service.js";
+import {
+  rootWorkflowContext,
+  type TicketWorkflowActions,
+  type WorkflowDispatchContext,
+  type WorkflowTicketSnapshot,
+} from "../workflows/workflow.types.js";
 type TicketStatusAction = "start" | "pending" | "resolve" | "close" | "reopen";
 type UpdatedTicket = {
   id: string;
@@ -34,6 +42,7 @@ export class TicketService {
     private readonly slaService: SlaService,
     private readonly notificationService: NotificationService,
     private readonly auditLogService: AuditLogService,
+    private readonly workflowService: WorkflowService,
   ) {}
 
   async list(
@@ -173,6 +182,7 @@ export class TicketService {
     data: TicketCreateBody,
     requesterUserId: string,
     requesterOrganizationId: string,
+    context: WorkflowDispatchContext = rootWorkflowContext(),
   ) {
     const scope = await this.authorizationService.getScope(requesterUserId);
 
@@ -383,6 +393,23 @@ export class TicketService {
       return ticketCreated;
     });
 
+    /**
+     * Las reglas corren cuando el ticket ya está guardado.
+     * Si una falla, esta alta no se deshace.
+     */
+    await this.dispatchWorkflow(
+      WorkflowTriggerEvent.TICKET_CREATED,
+      {
+        id: ticket.id,
+        organizationId: organization.id,
+        status: ticket.status,
+        priority: ticket.priority,
+        assignedToId: ticket.assignedTo?.id ?? null,
+        subject: ticket.subject,
+      },
+      context,
+    );
+
     return ticket;
   }
 
@@ -391,6 +418,7 @@ export class TicketService {
     data: TicketUpdateBody,
     requesterUserId: string,
     requesterOrganizationId: string,
+    context: WorkflowDispatchContext = rootWorkflowContext(),
   ) {
     const scope = await this.authorizationService.getScope(requesterUserId);
 
@@ -669,6 +697,29 @@ export class TicketService {
       return ticket;
     });
 
+    /**
+     * Asignar y editar otros campos son dos eventos.
+     * Un PATCH puede disparar los dos. El ticket ya está guardado.
+     */
+    if (
+      data.assignedToId !== undefined &&
+      data.assignedToId !== existingTicket.assignedToId
+    ) {
+      await this.dispatchWorkflow(
+        WorkflowTriggerEvent.TICKET_ASSIGNED,
+        this.workflowSnapshot(ticketUpdated),
+        context,
+      );
+    }
+
+    if (this.ticketDetailsChanged(data, existingTicket)) {
+      await this.dispatchWorkflow(
+        WorkflowTriggerEvent.TICKET_UPDATED,
+        this.workflowSnapshot(ticketUpdated),
+        context,
+      );
+    }
+
     return ticketUpdated;
   }
 
@@ -804,6 +855,7 @@ export class TicketService {
     message: string,
     notificationType: NotificationType,
     action: TicketStatusAction,
+    context: WorkflowDispatchContext = rootWorkflowContext(),
   ) {
     const scope = await this.authorizationService.getScope(requesterUserId);
 
@@ -936,6 +988,18 @@ export class TicketService {
       return updateTicket;
     });
 
+    /**
+     * Resolver emite TICKET_RESOLVED y no también TICKET_STATUS_CHANGED.
+     * El ticket ya está guardado: una regla que falle no lo revierte.
+     */
+    await this.dispatchWorkflow(
+      status === TicketStatus.RESOLVED
+        ? WorkflowTriggerEvent.TICKET_RESOLVED
+        : WorkflowTriggerEvent.TICKET_STATUS_CHANGED,
+      this.workflowSnapshot(ticket),
+      context,
+    );
+
     return ticket;
   }
 
@@ -973,6 +1037,103 @@ export class TicketService {
         entityId: updatedTicket.id,
       },
       tx,
+    );
+  }
+
+  private async dispatchWorkflow(
+    trigger: WorkflowTriggerEvent,
+    ticket: WorkflowTicketSnapshot,
+    context: WorkflowDispatchContext,
+  ) {
+    await this.workflowService.run(
+      trigger,
+      ticket,
+      context,
+      this.workflowActions(),
+    );
+  }
+
+  private workflowActions(): TicketWorkflowActions {
+    return {
+      assign: async (
+        ticketId,
+        assignedToId,
+        actorUserId,
+        organizationId,
+        context,
+      ) => {
+        await this.update(
+          ticketId,
+          { assignedToId },
+          actorUserId,
+          organizationId,
+          context,
+        );
+      },
+      changeStatus: async (
+        ticketId,
+        status,
+        actorUserId,
+        organizationId,
+        context,
+      ) => {
+        await this.updateStatus(
+          ticketId,
+          status,
+          actorUserId,
+          organizationId,
+          Object.values(TicketStatus),
+          "Ticket actualizado por una regla",
+          "Una regla ha cambiado el estado del ticket.",
+          status === TicketStatus.RESOLVED
+            ? NotificationType.TICKET_RESOLVED
+            : NotificationType.TICKET_UPDATED,
+          this.workflowStatusAction(status),
+          context,
+        );
+      },
+    };
+  }
+
+  private workflowStatusAction(status: TicketStatus): TicketStatusAction {
+    if (status === TicketStatus.RESOLVED) return "resolve";
+    if (status === TicketStatus.CLOSED) return "close";
+    if (status === TicketStatus.WAITING_CUSTOMER) return "pending";
+    if (status === TicketStatus.IN_PROGRESS) return "reopen";
+    return "start";
+  }
+
+  private workflowSnapshot(ticket: WorkflowTicketSnapshot): WorkflowTicketSnapshot {
+    return {
+      id: ticket.id,
+      organizationId: ticket.organizationId,
+      status: ticket.status,
+      priority: ticket.priority,
+      assignedToId: ticket.assignedToId,
+      subject: ticket.subject,
+    };
+  }
+
+  private ticketDetailsChanged(
+    data: TicketUpdateBody,
+    existingTicket: {
+      customerId: string;
+      subject: string;
+      description: string | null;
+      projectId: string | null;
+      categoryId: string | null;
+    },
+  ) {
+    return (
+      (data.customerId !== undefined &&
+        data.customerId !== existingTicket.customerId) ||
+      (data.subject !== undefined && data.subject !== existingTicket.subject) ||
+      (data.description !== undefined &&
+        data.description !== existingTicket.description) ||
+      (data.projectId !== undefined &&
+        data.projectId !== existingTicket.projectId) ||
+      (data.categoryId !== undefined &&
+        data.categoryId !== existingTicket.categoryId)
     );
   }
 }

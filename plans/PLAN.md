@@ -30,7 +30,7 @@ Fuera de este cierre: tasks, correo, invitaciones, reset de contraseña, prefere
 - [x] **Fase 0.** Seguridad e integridad. Completada.
 - [x] **Fase 1.** Dejar Vitest en verde (prueba del scheduler). Completada.
 - [x] **Fase 2.** Audit log. Completada.
-- [ ] **Fase 3.** Workflows mínimos.
+- [x] **Fase 3.** Workflows mínimos. Completada.
 - [ ] **Fase 4.** Informes por consulta, sin cola.
 - [ ] **Fase 5.** API keys.
 - [ ] **Fase 6.** Revisión integral y concurrencia del SLA.
@@ -143,7 +143,7 @@ A mano: cambia el nombre de un usuario y `GET /audit-logs` con su token. Debe sa
 
 ## Fase 3. Workflows mínimos
 
-**Estado:** pendiente.
+**Estado:** completada. Reporte: [implementations/fase-3-workflows.md](../implementations/fase-3-workflows.md).
 
 **Prioridad:** P1. Es la fase grande. Depende de la 2.
 

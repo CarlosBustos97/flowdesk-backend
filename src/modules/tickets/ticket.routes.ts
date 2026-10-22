@@ -20,6 +20,7 @@ import { PERMISSIONS } from "../../common/auth/permissions.js";
 import { SlaService } from "../sla-policies/sla.service.js";
 import { NotificationService } from "../notifications/notification.service.js";
 import { AuditLogService } from "../audit-logs/audit-log.service.js";
+import { WorkflowService } from "../workflows/workflow.service.js";
 
 export async function ticketRoutes(app: FastifyInstance) {
   const notificationService = new NotificationService(app.prisma);
@@ -28,6 +29,12 @@ export async function ticketRoutes(app: FastifyInstance) {
     app.authorizationService,
   );
   const slaService = new SlaService(app.prisma, notificationService);
+  const workflowService = new WorkflowService(
+    app.prisma,
+    app.authorizationService,
+    notificationService,
+    auditLogService,
+  );
 
   const ticketController = new TicketController(
     new TicketService(
@@ -36,6 +43,7 @@ export async function ticketRoutes(app: FastifyInstance) {
       slaService,
       notificationService,
       auditLogService,
+      workflowService,
     ),
     slaService,
   );

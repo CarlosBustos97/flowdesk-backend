@@ -61,6 +61,11 @@ export const PERMISSIONS = {
   NOTIFICATIONS_MARK_ALL_AS_READ: "notifications.mark-all-as-read",
 
   AUDIT_LOGS_VIEW: "audit_logs.view",
+
+  WORKFLOWS_VIEW: "workflows.view",
+  WORKFLOWS_CREATE: "workflows.create",
+  WORKFLOWS_UPDATE: "workflows.update",
+  WORKFLOWS_DELETE: "workflows.delete",
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

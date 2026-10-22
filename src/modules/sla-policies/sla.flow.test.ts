@@ -286,6 +286,7 @@ function createFlow() {
     slaService,
     notificationService,
     auditLogService,
+    { run: async () => {} } as never,
   );
   const commentService = new CommentService(
     prisma,

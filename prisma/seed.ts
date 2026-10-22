@@ -331,6 +331,30 @@ const PERMISSIONS = [
     description: "View audit logs",
     module: "audit",
   },
+  {
+    code: "workflows.view",
+    name: "View workflows",
+    description: "View workflows",
+    module: "workflows",
+  },
+  {
+    code: "workflows.create",
+    name: "Create workflows",
+    description: "Create workflows",
+    module: "workflows",
+  },
+  {
+    code: "workflows.update",
+    name: "Update workflows",
+    description: "Update workflows",
+    module: "workflows",
+  },
+  {
+    code: "workflows.delete",
+    name: "Delete workflows",
+    description: "Deactivate workflows",
+    module: "workflows",
+  },
 ];
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -378,6 +402,10 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "notifications.mark-as-read",
     "notifications.mark-all-as-read",
     "audit_logs.view",
+    "workflows.view",
+    "workflows.create",
+    "workflows.update",
+    "workflows.delete",
   ],
 
   MANAGER: [
@@ -414,6 +442,10 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "notifications.mark-as-read",
     "notifications.mark-all-as-read",
     "audit_logs.view",
+    "workflows.view",
+    "workflows.create",
+    "workflows.update",
+    "workflows.delete",
   ],
 
   AGENT: [
