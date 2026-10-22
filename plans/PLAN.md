@@ -35,7 +35,7 @@ Fuera de este cierre: tasks, correo, invitaciones, reset de contraseña, prefere
 - [x] **Fase 5.** API keys. Completada.
 - [x] **Fase 6.** Revisión integral y concurrencia del SLA. Completada.
 - [x] **Fase 7.** ESLint y CI. Completada.
-- [ ] **Fase 8.** README y arranque local.
+- [x] **Fase 8.** README y arranque local. Completada.
 
 ## Decisiones ya tomadas
 
@@ -227,15 +227,15 @@ A mano: cambia el nombre de un usuario y `GET /audit-logs` con su token. Debe sa
 
 ## Fase 8. Arranque local
 
-**Estado:** pendiente.
+**Estado:** completada. Reporte: [implementations/fase-8-arranque-local.md](../implementations/fase-8-arranque-local.md).
 
 **Objetivo.** Un README con el orden real: Compose, variables de `.env.example`, `prisma migrate dev`, seed, `npm run dev`, y la lista de lo que el proyecto no incluye.
 
-**Cómo probarla.** Seguir el README en una base limpia hasta que `GET /health/ready` responda 200. No documentar un paso que no se haya ejecutado.
+**Qué se hizo.** `README.md` y `.env.example` con los valores de Compose. El seed crea un cliente, un proyecto y un ticket abierto, con la fecha límite del cálculo SLA que ya existe. Sobre una base vacía, `GET /health/ready` respondió 200. No hay Dockerfile. La base local anterior se restauró y quedó aplicada la migración `20261022193000_unique_api_key_hash`.
 
-**Opcional.** Dockerfile de la API. No elegir hosting aquí. El seed puede crear un cliente, un proyecto y un ticket de ejemplo cuando el alta de ticket ya no vaya a cambiar.
+**Cómo probarla.** Los comandos del README, en una base vacía, hasta que `GET /health/ready` responda 200 con `postgres` y `redis` en true.
 
-**Cierre.** Commit del README y de lo que se haya añadido para que esos pasos funcionen.
+**Cierre.** Commit del README, del ejemplo de entorno y del seed.
 
 ## Backend terminado cuando
 

@@ -1,5 +1,6 @@
 import { Priority, PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
+import { calculateSlaDueDates } from "../src/modules/sla-policies/sla-policy.calculator.js";
 
 const prisma = new PrismaClient();
 
@@ -736,6 +737,8 @@ async function main() {
     /*
      * 5. Users
      */
+    const userIds = new Map<string, string>();
+
     for (const user of USERS) {
       const passwordHash = await bcrypt.hash(user.password, 12);
 
@@ -761,6 +764,7 @@ async function main() {
       });
 
       console.log(`✓ User: ${record.email}`);
+      userIds.set(user.role, record.id);
 
       /*
        * 6. User role
@@ -874,6 +878,111 @@ async function main() {
     console.table(businessHours);
 
     console.log("✅ SLA seed completed.");
+
+    /*
+     * 9. Example customer, project and open ticket
+     */
+    const ownerId = userIds.get("OWNER");
+
+    if (!ownerId) {
+      throw new Error("Owner user was not seeded");
+    }
+
+    const demoCustomerEmail = "support@northwind.test";
+    const demoProjectName = "Office support";
+    const demoTicketSubject = "Printer on floor 2 is offline";
+
+    let customer = await tx.customer.findFirst({
+      where: {
+        organizationId: organization.id,
+        email: demoCustomerEmail,
+      },
+    });
+
+    if (!customer) {
+      customer = await tx.customer.create({
+        data: {
+          organizationId: organization.id,
+          name: "Northwind Office",
+          email: demoCustomerEmail,
+          status: "ACTIVE",
+        },
+      });
+    }
+
+    console.log(`✓ Customer: ${customer.name}`);
+
+    let project = await tx.project.findFirst({
+      where: {
+        organizationId: organization.id,
+        name: demoProjectName,
+      },
+    });
+
+    if (!project) {
+      project = await tx.project.create({
+        data: {
+          organizationId: organization.id,
+          customerId: customer.id,
+          name: demoProjectName,
+          description: "Example project for the local seed",
+          status: "ACTIVE",
+          priority: Priority.MEDIUM,
+          createdById: ownerId,
+        },
+      });
+    }
+
+    console.log(`✓ Project: ${project.name}`);
+
+    const existingTicket = await tx.ticket.findFirst({
+      where: {
+        organizationId: organization.id,
+        subject: demoTicketSubject,
+      },
+    });
+
+    if (!existingTicket) {
+      const openedAt = new Date();
+      const { firstResponseDueAt, resolutionDueAt } = calculateSlaDueDates(
+        slaPolicy,
+        openedAt,
+        businessHours,
+        [],
+        organization.timezone,
+      );
+
+      const ticket = await tx.ticket.create({
+        data: {
+          organizationId: organization.id,
+          customerId: customer.id,
+          projectId: project.id,
+          createdById: ownerId,
+          slaPolicyId: slaPolicy.id,
+          subject: demoTicketSubject,
+          description: "Example open ticket created by the seed.",
+          status: "OPEN",
+          priority: Priority.MEDIUM,
+          openedAt,
+          slaDueAt: resolutionDueAt,
+        },
+      });
+
+      await tx.ticketSla.create({
+        data: {
+          ticketId: ticket.id,
+          slaPolicyId: slaPolicy.id,
+          firstResponseDueAt,
+          firstResponseStatus: "WITHIN_SLA",
+          resolutionDueAt,
+          resolutionStatus: "WITHIN_SLA",
+        },
+      });
+
+      console.log(`✓ Ticket: ${ticket.subject}`);
+    } else {
+      console.log(`✓ Ticket already present: ${existingTicket.subject}`);
+    }
   });
 
   console.log("🌱 Database seed completed successfully.");
