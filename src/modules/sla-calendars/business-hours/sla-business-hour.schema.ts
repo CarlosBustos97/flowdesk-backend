@@ -1,6 +1,11 @@
+import { successResponse } from "../../../common/swagger-response.js";
+
 export const SlaBusinessHoursListSchema = {
   tags: ["SLA Calendars"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   params: {
     type: "object",
     required: ["id"],
@@ -17,6 +22,9 @@ export const SlaBusinessHoursListSchema = {
 export const SlaBusinessHoursUpdateSchema = {
   tags: ["SLA Calendars"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   params: {
     type: "object",
     required: ["id"],

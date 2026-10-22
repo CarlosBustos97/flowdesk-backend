@@ -1,14 +1,90 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("./plugins/prisma.js", () => ({
-  default: async (app: { decorate: (name: string, value: unknown) => void }) => {
-    app.decorate("prisma", {});
-  },
-}));
+const calendarId = "11111111-1111-4111-8111-111111111111";
 
-vi.mock("./plugins/redis.js", () => ({
-  default: async (app: { decorate: (name: string, value: unknown) => void }) => {
-    app.decorate("redis", {});
+const { prisma } = vi.hoisted(() => {
+  const prisma = {
+    user: {
+      findUnique: async () => ({
+        roles: [
+          {
+            role: {
+              name: "OWNER",
+              organizationId: null,
+              isGlobal: true,
+            },
+          },
+        ],
+      }),
+    },
+    permission: {
+      findFirst: async () => ({ id: "perm-1" }),
+    },
+    customer: {
+      findMany: async () => [
+        {
+          id: "customer-1",
+          name: "Northwind",
+          email: "northwind@acme.test",
+          phone: null,
+          company: null,
+          status: "ACTIVE",
+          address: null,
+          notes: null,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          deletedAt: null,
+          organization: { id: "org-1", name: "Acme", slug: "acme" },
+        },
+      ],
+      count: async () => 1,
+    },
+    slaCalendar: {
+      findFirst: async () => ({ id: calendarId }),
+    },
+    slaHoliday: {
+      findMany: async () => [
+        {
+          id: "holiday-1",
+          name: "Año nuevo",
+          date: new Date("2026-01-01T00:00:00.000Z"),
+        },
+      ],
+    },
+    $transaction: async (operations: Promise<unknown>[]) => Promise.all(operations),
+  };
+
+  return { prisma };
+});
+
+vi.mock("./plugins/prisma.js", async () => {
+  const { default: fp } = await import("fastify-plugin");
+
+  return {
+    default: fp(async (app: { decorate: (name: string, value: unknown) => void }) => {
+      app.decorate("prisma", prisma);
+    }),
+  };
+});
+
+vi.mock("./plugins/redis.js", async () => {
+  const { default: fp } = await import("fastify-plugin");
+
+  return {
+    default: fp(async (app: { decorate: (name: string, value: unknown) => void }) => {
+      app.decorate("redis", {});
+    }),
+  };
+});
+
+vi.mock("./modules/auth/auth.guard.js", () => ({
+  authGuard: async (request: { user: unknown; auth: unknown }) => {
+    request.user = {
+      id: "user-1",
+      organizationId: "org-1",
+      name: "Ada",
+      email: "ada@acme.test",
+    };
+    request.auth = { sessionId: "session-1" };
   },
 }));
 
@@ -58,6 +134,10 @@ describe("swagger", () => {
 
     for (const operation of operations) {
       expect(operation.tags?.length, operation.path).toBeGreaterThan(0);
+      expect(
+        operation.responses?.["200"] ?? operation.responses?.["201"],
+        operation.path,
+      ).toBeTruthy();
 
       if (operation.path === "/health" || operation.path === "/health/ready") {
         expect(operation.security, operation.path).toBeUndefined();
@@ -69,6 +149,34 @@ describe("swagger", () => {
         { apiKeyAuth: [] },
       ]);
     }
+
+    await app.close();
+  });
+
+  it("no recorta el listado de clientes ni el de festivos", async () => {
+    const app = await buildApp();
+
+    const customers = await app.inject({
+      method: "GET",
+      url: "/customers",
+    });
+    const customerBody = customers.json();
+
+    expect(customers.statusCode).toBe(200);
+    expect(customerBody.success).toBe(true);
+    expect(customerBody.data.customers[0].name).toBe("Northwind");
+    expect(customerBody.data.customers[0].email).toBe("northwind@acme.test");
+    expect(customerBody.data.pagination.total).toBe(1);
+
+    const holidays = await app.inject({
+      method: "GET",
+      url: `/sla-calendars/${calendarId}/holidays`,
+    });
+    const holidayBody = holidays.json();
+
+    expect(holidays.statusCode).toBe(200);
+    expect(holidayBody[0].name).toBe("Año nuevo");
+    expect(holidayBody[0].date).toBe("2026-01-01T00:00:00.000Z");
 
     await app.close();
   });

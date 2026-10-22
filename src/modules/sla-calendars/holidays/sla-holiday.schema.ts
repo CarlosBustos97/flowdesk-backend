@@ -1,6 +1,11 @@
+import { arrayResponse, objectResponse, successResponse } from "../../../common/swagger-response.js";
+
 export const slaHolidayListSchema = {
   tags: ["SLA Calendars"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: arrayResponse,
+  },
   params: {
     type: "object",
     required: ["id"],
@@ -17,6 +22,9 @@ export const slaHolidayListSchema = {
 export const slaHolidayCreateSchema = {
   tags: ["SLA Calendars"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    201: objectResponse,
+  },
   params: {
     type: "object",
     required: ["id"],
@@ -49,6 +57,9 @@ export const slaHolidayCreateSchema = {
 export const slaHolidayDeleteSchema = {
   tags: ["SLA Calendars"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   params: {
     type: "object",
     required: ["id", "holidayId"],

@@ -1,6 +1,11 @@
+import { successResponse } from "../../common/swagger-response.js";
+
 export const loginSchema = {
   tags: ["Authentication"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   body: {
     type: 'object',
     required: ['email', 'password', 'organizationSlug'],
@@ -29,9 +34,15 @@ export const loginSchema = {
 export const meSchema = {
   tags: ["Authentication"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
 };
 
 export const logoutSchema = {
   tags: ["Authentication"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
 };

@@ -1,3 +1,4 @@
+import { successResponse } from "../../common/swagger-response.js";
 import {
   WorkflowActionType,
   WorkflowOperator,
@@ -67,6 +68,9 @@ const idParams = {
 export const workflowListSchema = {
   tags: ["Workflows"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   querystring: {
     type: "object",
     additionalProperties: false,
@@ -97,12 +101,18 @@ export const workflowListSchema = {
 export const workflowShowSchema = {
   tags: ["Workflows"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   params: idParams,
 };
 
 export const workflowCreateSchema = {
   tags: ["Workflows"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    201: successResponse,
+  },
   body: {
     type: "object",
     required: ["organizationId", "name", "triggerEvent", "actions"],
@@ -142,6 +152,9 @@ export const workflowCreateSchema = {
 export const workflowUpdateSchema = {
   tags: ["Workflows"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   params: idParams,
   body: {
     type: "object",

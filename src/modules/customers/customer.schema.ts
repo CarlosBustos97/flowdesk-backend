@@ -1,8 +1,12 @@
+import { successResponse } from "../../common/swagger-response.js";
 import { CustomerStatus } from "@prisma/client";
 
 export const customerListSchema = {
   tags: ["Customers"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   querystring: {
     type: "object",
     properties: {
@@ -32,6 +36,9 @@ export const customerListSchema = {
 export const customerShowSchema = {
   tags: ["Customers"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   params: {
     type: "object",
     required: ["id"],
@@ -47,6 +54,9 @@ export const customerShowSchema = {
 export const customerCreateSchema = {
   tags: ["Customers"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    201: successResponse,
+  },
   body: {
     type: "object",
     required: ["name", "organizationId"],
@@ -92,6 +102,9 @@ export const customerCreateSchema = {
 export const customerUpdateSchema = {
   tags: ["Customers"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   params: {
     type: "object",
     required: ["id"],

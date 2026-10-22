@@ -1,6 +1,11 @@
+import { successResponse } from "../../common/swagger-response.js";
+
 export const auditLogListSchema = {
   tags: ["Audit Logs"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   querystring: {
     type: "object",
     additionalProperties: false,

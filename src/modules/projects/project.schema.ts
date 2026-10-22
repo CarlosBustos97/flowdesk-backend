@@ -1,8 +1,12 @@
+import { successResponse } from "../../common/swagger-response.js";
 import { Priority, ProjectStatus } from "@prisma/client";
 
 export const projectListSchema = {
   tags: ["Projects"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   querystring: {
     type: "object",
     additionalProperties: false,
@@ -49,6 +53,9 @@ export const projectListSchema = {
 export const projectShowSchema = {
   tags: ["Projects"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   params: {
     type: "object",
     required: ["id"],
@@ -64,6 +71,9 @@ export const projectShowSchema = {
 export const projectCreateSchema = {
   tags: ["Projects"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    201: successResponse,
+  },
   body: {
     type: "object",
     required: ["organizationId", "customerId", "name"],
@@ -105,6 +115,9 @@ export const projectCreateSchema = {
 export const projectUpdateSchema = {
   tags: ["Projects"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
      params: {
     type: "object",
     required: ["id"],

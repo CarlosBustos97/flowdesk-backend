@@ -1,6 +1,11 @@
+import { successResponse } from "../../common/swagger-response.js";
+
 export const apiKeyListSchema = {
   tags: ["API Keys"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   querystring: {
     type: "object",
     additionalProperties: false,
@@ -23,6 +28,9 @@ export const apiKeyListSchema = {
 export const apiKeyCreateSchema = {
   tags: ["API Keys"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    201: successResponse,
+  },
   body: {
     type: "object",
     required: ["organizationId", "name", "scopes"],
@@ -58,6 +66,9 @@ export const apiKeyCreateSchema = {
 export const apiKeyRevokeSchema = {
   tags: ["API Keys"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   params: {
     type: "object",
     required: ["id"],

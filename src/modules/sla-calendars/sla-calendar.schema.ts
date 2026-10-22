@@ -1,6 +1,11 @@
+import { successResponse } from "../../common/swagger-response.js";
+
 export const SlaCalendarListSchema = {
   tags: ["SLA Calendars"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   querystring: {
     type: "object",
     additionalProperties: false,
@@ -31,6 +36,9 @@ export const SlaCalendarListSchema = {
 export const SlaCalendarShowSchema = {
   tags: ["SLA Calendars"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   params: {
     type: "object",
     required: ["id"],
@@ -47,6 +55,9 @@ export const SlaCalendarShowSchema = {
 export const SlaCalendarCreateSchema = {
   tags: ["SLA Calendars"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    201: successResponse,
+  },
   body: {
     type: "object",
     required: ["name", "timezone", "organizationId"],
@@ -80,6 +91,9 @@ export const SlaCalendarCreateSchema = {
 export const SlaCalendarUpdateSchema = {
   tags: ["SLA Calendars"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   params: {
     type: "object",
     required: ["id"],

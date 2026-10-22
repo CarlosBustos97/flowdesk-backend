@@ -15,7 +15,7 @@ Redis no se toca. Sigue siendo el `ping` de `GET /health/ready` y el argumento s
 ## Estado
 
 - [x] **Fase 9.** Swagger: grupos y seguridad. Completada. Reporte: [implementations/fase-9-swagger.md](../implementations/fase-9-swagger.md).
-- [ ] **Fase 10.** Swagger: respuestas.
+- [x] **Fase 10.** Swagger: respuestas. Completada. Reporte: [implementations/fase-10-swagger-respuestas.md](../implementations/fase-10-swagger-respuestas.md).
 
 ## Qué hay hoy
 
@@ -39,7 +39,7 @@ Tags reales: Health, Authentication, Users, Customers, Projects, Tickets, Commen
 
 ## Fase 10. Swagger: respuestas
 
-**Estado:** pendiente.
+**Estado:** completada. Reporte: [implementations/fase-10-swagger-respuestas.md](../implementations/fase-10-swagger-respuestas.md).
 
 Añadir `response` leyendo el `send` de cada controlador. Donde el cuerpo es `{ success, data }`, `data` acepta propiedades de más. Donde el servicio se envía tal cual, el esquema describe ese objeto con la misma regla.
 

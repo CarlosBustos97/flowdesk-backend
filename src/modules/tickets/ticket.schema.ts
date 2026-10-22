@@ -1,8 +1,12 @@
+import { successResponse } from "../../common/swagger-response.js";
 import { Priority, TicketStatus } from "@prisma/client";
 
 export const ticketListSchema = {
   tags: ["Tickets"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   querystring: {
     type: "object",
     additionalProperties: false,
@@ -54,6 +58,9 @@ export const ticketListSchema = {
 export const ticketShowSchema = {
   tags: ["Tickets"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   params: {
     type: "object",
     required: ["id"],
@@ -70,6 +77,9 @@ export const ticketShowSchema = {
 export const ticketCreateSchema = {
   tags: ["Tickets"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    201: successResponse,
+  },
   body: {
     type: "object",
     required: [
@@ -127,6 +137,9 @@ export const ticketCreateSchema = {
 export const ticketUpdateSchema = {
   tags: ["Tickets"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   params: {
     type: "object",
     required: ["id"],

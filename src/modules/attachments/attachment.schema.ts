@@ -1,6 +1,11 @@
+import { objectResponse } from "../../common/swagger-response.js";
+
 export const attachmentListSchema = {
   tags: ["Attachments"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: objectResponse,
+  },
   params: {
     type: "object",
     required: ["ticketId"],
@@ -39,6 +44,9 @@ export const attachmentListSchema = {
 export const attachmentDeleteSchema = {
   tags: ["Attachments"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: objectResponse,
+  },
   params: {
     type: "object",
     required: ["id"],
@@ -55,6 +63,9 @@ export const attachmentDeleteSchema = {
 export const attachmentCreateSchema = {
   tags: ["Attachments"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    201: objectResponse,
+  },
   params: {
     type: "object",
     required: ["ticketId"],

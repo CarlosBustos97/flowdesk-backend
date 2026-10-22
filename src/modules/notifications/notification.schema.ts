@@ -1,6 +1,11 @@
+import { successResponse } from "../../common/swagger-response.js";
+
 export const notificationListSchema = {
   tags: ["Notifications"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   querystring: {
     type: "object",
     additionalProperties: false,
@@ -26,16 +31,25 @@ export const notificationListSchema = {
 export const notificationCountUnreadSchema = {
   tags: ["Notifications"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
 };
 
 export const notificationReadAllSchema = {
   tags: ["Notifications"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
 };
 
 export const notificationReadSchema = {
   tags: ["Notifications"],
   security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+  response: {
+    200: successResponse,
+  },
   params: {
     type: "object",
     required: ["id"],
