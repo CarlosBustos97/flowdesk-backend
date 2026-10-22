@@ -33,7 +33,7 @@ Fuera de este cierre: tasks, correo, invitaciones, reset de contraseña, prefere
 - [x] **Fase 3.** Workflows mínimos. Completada.
 - [x] **Fase 4.** Informes por consulta, sin cola. Completada.
 - [x] **Fase 5.** API keys. Completada.
-- [ ] **Fase 6.** Revisión integral y concurrencia del SLA.
+- [x] **Fase 6.** Revisión integral y concurrencia del SLA. Completada.
 - [ ] **Fase 7.** ESLint y CI.
 - [ ] **Fase 8.** README y arranque local.
 
@@ -197,7 +197,7 @@ A mano: cambia el nombre de un usuario y `GET /audit-logs` con su token. Debe sa
 
 ## Fase 6. Revisión y concurrencia del SLA
 
-**Estado:** pendiente. Después de las fases 3, 4 y 5.
+**Estado:** completada. Reporte: [implementations/fase-6-aislamiento-y-concurrencia.md](../implementations/fase-6-aislamiento-y-concurrencia.md).
 
 **Objetivo.** Probar el aislamiento de los módulos ya hechos y las carreras que se dejaron anotadas. Corregir solo lo que una prueba demuestre mal.
 

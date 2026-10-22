@@ -180,6 +180,7 @@ function createDirectEvaluation(options: {
     },
   };
 
+  const alertWrites: unknown[] = [];
   const prisma = {
     ticketSla: {
       findUnique: async () => ticketSla,
@@ -194,7 +195,10 @@ function createDirectEvaluation(options: {
       },
     },
     slaAlertEvent: {
-      createMany: async () => ({ count: 1 }),
+      createMany: async (args: unknown) => {
+        alertWrites.push(args);
+        return { count: 1 };
+      },
     },
     $transaction: async (callback: (tx: unknown) => Promise<unknown>) =>
       callback(prisma),
@@ -202,6 +206,7 @@ function createDirectEvaluation(options: {
 
   return {
     ticketSla,
+    alertWrites,
     service: new SlaService(prisma as unknown as PrismaClient),
   };
 }
@@ -299,6 +304,21 @@ describe("evaluateDueTicketSlas y evaluateTicketSla", () => {
 
     expect(updated.firstResponseStatus).toBe(SlaStatus.WITHIN_SLA);
     expect(updated.resolutionStatus).toBe(SlaStatus.BREACHED);
+  });
+
+  it("una segunda evaluación en el mismo estado no crea otra alerta", async () => {
+    const evaluation = createDirectEvaluation({
+      firstResponseMinutes: 30,
+      resolutionMinutes: ELAPSED_WORK_MINUTES,
+      firstResponseAt: OPENED_AT,
+      resolvedAt: null,
+    });
+
+    await evaluation.service.evaluateTicketSla("ticket-1");
+    await evaluation.service.evaluateTicketSla("ticket-1");
+
+    expect(evaluation.alertWrites).toHaveLength(1);
+    expect(evaluation.ticketSla.resolutionStatus).toBe(SlaStatus.BREACHED);
   });
 
   it("procesa 205 SLA pendientes sin repetir el cursor ni omitir elegibles", async () => {

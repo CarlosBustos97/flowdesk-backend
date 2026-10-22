@@ -10,6 +10,7 @@ export default fp(async (app) => {
         new NotificationService(app.prisma),
     );
 
+    // isRunning solo evita solapes dentro de este proceso. No coordina varias instancias.
     let isRunning = false;
     let activeEvaluation: Promise<void> | undefined;
 
