@@ -46,7 +46,7 @@ async function authenticateSession(
   if (!session) throw new AppError(401, "Invalid or expired session");
 
   if (session.expiresAt <= new Date())
-    throw new AppError(401, "Session expired");
+    throw new AppError(401, "Invalid or expired session");
 
   if (session.user.status !== UserStatus.ACTIVE)
     throw new AppError(401, "Invalid or expired session");

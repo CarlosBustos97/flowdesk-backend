@@ -15,7 +15,7 @@ Redis no se toca. Sigue siendo el `ping` de `GET /health/ready`. No se reabren l
 ## Estado
 
 - [x] **Fase 15.** Rango en el PATCH de usuario. Completada. Reporte: [implementations/fase-15-rango-patch-usuario.md](../implementations/fase-15-rango-patch-usuario.md).
-- [ ] **Fase 16.** Mismo 401 en el login y en la sesión.
+- [x] **Fase 16.** Mismo 401 en el login y en la sesión. Completada. Reporte: [implementations/fase-16-login-401.md](../implementations/fase-16-login-401.md).
 - [ ] **Fase 17.** Helmet y límite del login.
 - [ ] **Fase 18.** Extensión del adjunto.
 
@@ -41,7 +41,7 @@ Si el objetivo es otro usuario, `update` exige `canDisableUser` antes de cambiar
 
 ## Fase 16. Mismo 401 en el login y en la sesión
 
-**Estado:** pendiente.
+**Estado:** completada. Reporte: [implementations/fase-16-login-401.md](../implementations/fase-16-login-401.md).
 
 Si falta la organización o el usuario, `login` ejecuta `bcrypt.compare` contra un hash fijo y luego responde `Invalid credentials`. Sesión ausente, caducada o de usuario no activo responden `Invalid or expired session`.
 

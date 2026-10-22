@@ -5,6 +5,7 @@ import crypto from "node:crypto";
 import type { LoginResponse } from "./auth.types.js";
 import { AppError } from "../../common/errors/app-error.js";
 
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync("flowdesk-login-dummy", 12);
 
 export class AuthService {
   constructor(
@@ -21,20 +22,24 @@ export class AuthService {
       where: { slug: organizationSlug },
     });
 
-    if (!organization) throw new AppError(401, "Invalid credentials");
+    const user = organization
+      ? await this.prisma.user.findFirst({
+          where: {
+            email,
+            organizationId: organization.id,
+            status: "ACTIVE",
+          },
+        })
+      : null;
 
-    const user = await this.prisma.user.findFirst({
-      where: {
-        email,
-        organizationId: organization.id,
-        status: "ACTIVE",
-      },
-    });
+    const passwordMatch = await bcrypt.compare(
+      password,
+      user?.passwordHash ?? DUMMY_PASSWORD_HASH,
+    );
 
-    if (!user) throw new AppError(401, "Invalid credentials");
-
-    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!passwordMatch) throw new AppError(401, "Invalid credentials");
+    if (!organization || !user || !passwordMatch) {
+      throw new AppError(401, "Invalid credentials");
+    }
 
     const token = crypto.randomBytes(32).toString("hex");
 

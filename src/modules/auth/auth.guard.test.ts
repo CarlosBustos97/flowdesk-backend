@@ -95,6 +95,18 @@ describe("authGuard", () => {
     });
   });
 
+  it("usa el mismo mensaje si la sesión caducó", async () => {
+    const { request } = requestFor(
+      UserStatus.ACTIVE,
+      new Date(Date.now() - 60_000),
+    );
+
+    await expect(authGuard(request as never)).rejects.toMatchObject({
+      statusCode: 401,
+      message: "Invalid or expired session",
+    });
+  });
+
   it("acepta la sesión de un usuario ACTIVE", async () => {
     const { request } = requestFor(UserStatus.ACTIVE);
 

@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { AuthService } from "./auth.service.js";
 
 type UserRow = {
@@ -106,11 +106,40 @@ describe("AuthService.login", () => {
     expect(sessions).toEqual([]);
   });
 
-  it("responde 401 si el slug no existe", async () => {
+  it("compara el hash aunque el slug no exista", async () => {
+    const compare = vi.spyOn(bcrypt, "compare");
     const { auth } = service();
 
     await expect(
       auth.login("ana@acme.test", "AnaClave1", "no-existe"),
-    ).rejects.toMatchObject({ statusCode: 401 });
+    ).rejects.toMatchObject({
+      statusCode: 401,
+      message: "Invalid credentials",
+    });
+
+    expect(compare).toHaveBeenCalledWith(
+      "AnaClave1",
+      expect.stringMatching(/^\$2[ab]\$/),
+    );
+    compare.mockRestore();
+  });
+
+  it("compara el hash aunque el usuario no exista", async () => {
+    const compare = vi.spyOn(bcrypt, "compare");
+    const { auth, sessions } = service();
+
+    await expect(
+      auth.login("nadie@acme.test", "AnaClave1", "acme-corporation"),
+    ).rejects.toMatchObject({
+      statusCode: 401,
+      message: "Invalid credentials",
+    });
+
+    expect(sessions).toEqual([]);
+    expect(compare).toHaveBeenCalledWith(
+      "AnaClave1",
+      expect.stringMatching(/^\$2[ab]\$/),
+    );
+    compare.mockRestore();
   });
 });
