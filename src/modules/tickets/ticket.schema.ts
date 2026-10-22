@@ -1,6 +1,8 @@
 import { Priority, TicketStatus } from "@prisma/client";
 
 export const ticketListSchema = {
+  tags: ["Tickets"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   querystring: {
     type: "object",
     additionalProperties: false,
@@ -50,6 +52,8 @@ export const ticketListSchema = {
 };
 
 export const ticketShowSchema = {
+  tags: ["Tickets"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],
@@ -64,6 +68,8 @@ export const ticketShowSchema = {
 };
 
 export const ticketCreateSchema = {
+  tags: ["Tickets"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   body: {
     type: "object",
     required: [
@@ -119,6 +125,8 @@ export const ticketCreateSchema = {
 };
 
 export const ticketUpdateSchema = {
+  tags: ["Tickets"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],

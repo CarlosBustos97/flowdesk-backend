@@ -1,6 +1,8 @@
 import { Priority } from "@prisma/client";
 
 export const PolicyListSchema = {
+  tags: ["SLA Policies"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   querystring: {
     type: "object",
     additionalProperties: false,
@@ -33,6 +35,8 @@ export const PolicyListSchema = {
 };
 
 export const PolicyShowSchema = {
+  tags: ["SLA Policies"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],
@@ -47,6 +51,8 @@ export const PolicyShowSchema = {
 };
 
 export const PolicyCreateSchema = {
+  tags: ["SLA Policies"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   body: {
     type: "object",
     required: [
@@ -94,6 +100,8 @@ export const PolicyCreateSchema = {
 };
 
 export const PolicyUpdateSchema = {
+  tags: ["SLA Policies"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],

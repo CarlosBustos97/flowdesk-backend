@@ -1,4 +1,6 @@
 export const slaHolidayListSchema = {
+  tags: ["SLA Calendars"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],
@@ -13,6 +15,8 @@ export const slaHolidayListSchema = {
 };
 
 export const slaHolidayCreateSchema = {
+  tags: ["SLA Calendars"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],
@@ -43,6 +47,8 @@ export const slaHolidayCreateSchema = {
 };
 
 export const slaHolidayDeleteSchema = {
+  tags: ["SLA Calendars"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id", "holidayId"],

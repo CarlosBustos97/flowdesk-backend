@@ -1,4 +1,6 @@
 export const apiKeyListSchema = {
+  tags: ["API Keys"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   querystring: {
     type: "object",
     additionalProperties: false,
@@ -19,6 +21,8 @@ export const apiKeyListSchema = {
 };
 
 export const apiKeyCreateSchema = {
+  tags: ["API Keys"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   body: {
     type: "object",
     required: ["organizationId", "name", "scopes"],
@@ -52,6 +56,8 @@ export const apiKeyCreateSchema = {
 };
 
 export const apiKeyRevokeSchema = {
+  tags: ["API Keys"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],

@@ -65,6 +65,8 @@ const idParams = {
 };
 
 export const workflowListSchema = {
+  tags: ["Workflows"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   querystring: {
     type: "object",
     additionalProperties: false,
@@ -93,10 +95,14 @@ export const workflowListSchema = {
 };
 
 export const workflowShowSchema = {
+  tags: ["Workflows"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: idParams,
 };
 
 export const workflowCreateSchema = {
+  tags: ["Workflows"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   body: {
     type: "object",
     required: ["organizationId", "name", "triggerEvent", "actions"],
@@ -134,6 +140,8 @@ export const workflowCreateSchema = {
 };
 
 export const workflowUpdateSchema = {
+  tags: ["Workflows"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: idParams,
   body: {
     type: "object",

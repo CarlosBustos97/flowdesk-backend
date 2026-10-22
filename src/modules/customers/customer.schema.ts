@@ -1,6 +1,8 @@
 import { CustomerStatus } from "@prisma/client";
 
 export const customerListSchema = {
+  tags: ["Customers"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   querystring: {
     type: "object",
     properties: {
@@ -28,6 +30,8 @@ export const customerListSchema = {
 };
 
 export const customerShowSchema = {
+  tags: ["Customers"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],
@@ -41,6 +45,8 @@ export const customerShowSchema = {
 };
 
 export const customerCreateSchema = {
+  tags: ["Customers"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   body: {
     type: "object",
     required: ["name", "organizationId"],
@@ -84,6 +90,8 @@ export const customerCreateSchema = {
 };
 
 export const customerUpdateSchema = {
+  tags: ["Customers"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],

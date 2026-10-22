@@ -1,4 +1,6 @@
 export const SlaBusinessHoursListSchema = {
+  tags: ["SLA Calendars"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],
@@ -13,6 +15,8 @@ export const SlaBusinessHoursListSchema = {
 };
 
 export const SlaBusinessHoursUpdateSchema = {
+  tags: ["SLA Calendars"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],

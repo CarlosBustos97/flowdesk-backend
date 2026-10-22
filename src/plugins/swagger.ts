@@ -19,6 +19,20 @@ export default fp(async (app) => {
         },
       ],
 
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+          },
+          apiKeyAuth: {
+            type: 'apiKey',
+            in: 'header',
+            name: 'X-Api-Key',
+          },
+        },
+      },
+
       tags: [
         {
           name: 'Health',
@@ -33,10 +47,6 @@ export default fp(async (app) => {
           description: 'User management',
         },
         {
-          name: 'Organizations',
-          description: 'Organization management',
-        },
-        {
           name: 'Customers',
           description: 'Customer management',
         },
@@ -45,12 +55,44 @@ export default fp(async (app) => {
           description: 'Project management',
         },
         {
-          name: 'Tasks',
-          description: 'Task management',
-        },
-        {
           name: 'Tickets',
           description: 'Ticket management',
+        },
+        {
+          name: 'Comments',
+          description: 'Ticket comments',
+        },
+        {
+          name: 'Attachments',
+          description: 'Ticket attachments',
+        },
+        {
+          name: 'Notifications',
+          description: 'User notifications',
+        },
+        {
+          name: 'SLA Calendars',
+          description: 'SLA calendars, business hours and holidays',
+        },
+        {
+          name: 'SLA Policies',
+          description: 'SLA policies',
+        },
+        {
+          name: 'Workflows',
+          description: 'Ticket workflows',
+        },
+        {
+          name: 'Audit Logs',
+          description: 'Audit log',
+        },
+        {
+          name: 'Reports',
+          description: 'Ticket reports',
+        },
+        {
+          name: 'API Keys',
+          description: 'Organization API keys',
         },
       ],
     },

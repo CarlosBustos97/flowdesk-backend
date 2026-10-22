@@ -1,4 +1,6 @@
 export const commentListSchema = {
+  tags: ["Comments"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["ticketId"],
@@ -30,6 +32,8 @@ export const commentListSchema = {
 };
 
 export const commentCreateSchema = {
+  tags: ["Comments"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["ticketId"],
@@ -59,6 +63,8 @@ export const commentCreateSchema = {
 };
 
 export const commentUpdateSchema = {
+  tags: ["Comments"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],
@@ -85,6 +91,8 @@ export const commentUpdateSchema = {
 };
 
 export const commentDeleteSchema = {
+  tags: ["Comments"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],

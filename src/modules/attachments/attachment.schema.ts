@@ -1,4 +1,6 @@
 export const attachmentListSchema = {
+  tags: ["Attachments"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["ticketId"],
@@ -35,6 +37,8 @@ export const attachmentListSchema = {
 };
 
 export const attachmentDeleteSchema = {
+  tags: ["Attachments"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],
@@ -49,6 +53,8 @@ export const attachmentDeleteSchema = {
 };
 
 export const attachmentCreateSchema = {
+  tags: ["Attachments"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["ticketId"],

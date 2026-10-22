@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { AuthService } from "./auth.service.js";
-import { loginSchema } from "./auth.schema.js";
+import { loginSchema, logoutSchema, meSchema } from "./auth.schema.js";
 import { AuthController } from "./auth.controller.js";
 import { authGuard } from "./auth.guard.js";
 
@@ -17,13 +17,13 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.get(
     "/auth/me",
-    { preHandler: authGuard },
+    { schema: meSchema, preHandler: authGuard },
     authController.me.bind(authController),
   );
 
   app.post(
     "/auth/logout",
-    { preHandler: authGuard },
+    { schema: logoutSchema, preHandler: authGuard },
     authController.logout.bind(authController),
   );
 }

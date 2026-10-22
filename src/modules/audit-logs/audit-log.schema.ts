@@ -1,4 +1,6 @@
 export const auditLogListSchema = {
+  tags: ["Audit Logs"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   querystring: {
     type: "object",
     additionalProperties: false,

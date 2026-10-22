@@ -8,7 +8,9 @@ import type {
 import { requirePermission } from "../../common/guards/permission.guard.js";
 import { PERMISSIONS } from "../../common/auth/permissions.js";
 import {
+  notificationCountUnreadSchema,
   notificationListSchema,
+  notificationReadAllSchema,
   notificationReadSchema,
 } from "./notification.schema.js";
 import { authGuard } from "../auth/auth.guard.js";
@@ -33,6 +35,7 @@ export async function notificationRoutes(app: FastifyInstance) {
   app.get(
     "/notifications/count-unread",
     {
+      schema: notificationCountUnreadSchema,
       preHandler: [
         authGuard,
         requirePermission(PERMISSIONS.NOTIFICATIONS_COUNT_UNREAD),
@@ -56,6 +59,7 @@ export async function notificationRoutes(app: FastifyInstance) {
   app.patch(
     "/notifications/read-all",
     {
+      schema: notificationReadAllSchema,
       preHandler: [
         authGuard,
         requirePermission(PERMISSIONS.NOTIFICATIONS_MARK_ALL_AS_READ),

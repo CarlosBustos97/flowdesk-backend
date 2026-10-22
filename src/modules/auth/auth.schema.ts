@@ -1,4 +1,6 @@
 export const loginSchema = {
+  tags: ["Authentication"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   body: {
     type: 'object',
     required: ['email', 'password', 'organizationSlug'],
@@ -23,3 +25,13 @@ export const loginSchema = {
     },
   },
 } as const;
+
+export const meSchema = {
+  tags: ["Authentication"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+};
+
+export const logoutSchema = {
+  tags: ["Authentication"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+};

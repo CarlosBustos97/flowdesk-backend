@@ -1,4 +1,6 @@
 export const ticketCategoryListSchema = {
+  tags: ["Tickets"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   querystring: {
     type: "object",
     additionalProperties: false,
@@ -27,6 +29,8 @@ export const ticketCategoryListSchema = {
 };
 
 export const ticketCategoryShowSchema = {
+  tags: ["Tickets"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],
@@ -41,6 +45,8 @@ export const ticketCategoryShowSchema = {
 };
 
 export const ticketCategoryCreateSchema = {
+  tags: ["Tickets"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   body: {
     type: "object",
     required: ["organizationId", "name"],
@@ -65,6 +71,8 @@ export const ticketCategoryCreateSchema = {
 };
 
 export const ticketCategoryUpdateSchema = {
+  tags: ["Tickets"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],

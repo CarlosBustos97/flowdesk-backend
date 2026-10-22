@@ -1,4 +1,6 @@
 export const notificationListSchema = {
+  tags: ["Notifications"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   querystring: {
     type: "object",
     additionalProperties: false,
@@ -21,7 +23,19 @@ export const notificationListSchema = {
   },
 };
 
+export const notificationCountUnreadSchema = {
+  tags: ["Notifications"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+};
+
+export const notificationReadAllSchema = {
+  tags: ["Notifications"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+};
+
 export const notificationReadSchema = {
+  tags: ["Notifications"],
+  security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
   params: {
     type: "object",
     required: ["id"],
