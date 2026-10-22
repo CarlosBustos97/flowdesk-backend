@@ -21,14 +21,15 @@ import { SlaService } from "../sla-policies/sla.service.js";
 import { NotificationService } from "../notifications/notification.service.js";
 
 export async function ticketRoutes(app: FastifyInstance) {
-  const slaService = new SlaService(app.prisma);
+  const notificationService = new NotificationService(app.prisma);
+  const slaService = new SlaService(app.prisma, notificationService);
 
   const ticketController = new TicketController(
     new TicketService(
       app.prisma,
       app.authorizationService,
       slaService,
-      new NotificationService(app.prisma),
+      notificationService,
     ),
     slaService,
   );

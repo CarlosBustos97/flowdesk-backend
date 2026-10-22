@@ -1,14 +1,27 @@
-import { type PrismaClient, type Prisma, TicketStatus } from "@prisma/client";
+import {
+  type PrismaClient,
+  type Prisma,
+  TicketStatus,
+  SlaStatus,
+  Metric,
+} from "@prisma/client";
 
 import { AppError } from "../../common/errors/app-error.js";
-import {
-  evaluateEffectiveSlaStatus,
-} from "./sla-policy.calculator.js";
+import { evaluateEffectiveSlaStatus } from "./sla-policy.calculator.js";
 import { calculateElapsedWorkTime } from "./sla-business-hours.calculator.js";
 import { SlaSweepError, type SlaSweepFailure } from "./sla-sweep.error.js";
+import type { NotificationService } from "../notifications/notification.service.js";
+import {
+  isActionableSlaTransition,
+  metricTypeForStatus,
+  slaAlertCopy,
+} from "./sla-alert.rule.js";
 
 export class SlaService {
-  constructor(private readonly prisma: PrismaClient) { }
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly notificationService: NotificationService,
+  ) {}
 
   async evaluateTicketSla(ticketId: string) {
     const ticketSla = await this.prisma.ticketSla.findUnique({
@@ -78,6 +91,8 @@ export class SlaService {
 
     let firstResponseStatus = ticketSla.firstResponseStatus;
     let resolutionStatus = ticketSla.resolutionStatus;
+    const previousFirstResponseStatus = ticketSla.firstResponseStatus;
+    const previousResolutionStatus = ticketSla.resolutionStatus;
 
     /**
      * First Response SLA
@@ -106,17 +121,96 @@ export class SlaService {
       );
     }
 
-    const updatedTicketSla = await this.prisma.ticketSla.update({
-      where: {
-        ticketId,
-      },
-      data: {
+    const updateTicketSla = await this.prisma.$transaction(async (tx) => {
+      const updatedTicketSla = await tx.ticketSla.update({
+        where: {
+          ticketId,
+        },
+        data: {
+          firstResponseStatus,
+          resolutionStatus,
+        },
+        select: {
+          id: true,
+          ticket: {
+            select: {
+              id: true,
+              organizationId: true,
+              assignedToId: true,
+            },
+          },
+        },
+      });
+
+      await this.recordSlaAlert(
+        tx,
+        ticketSla.id,
+        Metric.FIRST_RESPONSE,
+        previousFirstResponseStatus,
         firstResponseStatus,
+        updatedTicketSla.ticket,
+      );
+
+      await this.recordSlaAlert(
+        tx,
+        ticketSla.id,
+        Metric.RESOLUTION,
+        previousResolutionStatus,
         resolutionStatus,
-      },
+        updatedTicketSla.ticket,
+      );
+
+      return updatedTicketSla;
     });
 
-    return updatedTicketSla;
+    return updateTicketSla;
+  }
+
+  private async recordSlaAlert(
+    tx: Prisma.TransactionClient,
+    ticketSlaId: string,
+    metric: Metric,
+    previousStatus: SlaStatus | null,
+    nextStatus: SlaStatus | null,
+    ticket: {
+      id: string;
+      organizationId: string;
+      assignedToId: string | null;
+    },
+  ) {
+    if (!isActionableSlaTransition(previousStatus, nextStatus)) {
+      return;
+    }
+
+    const type = metricTypeForStatus(nextStatus);
+    const alert = await tx.slaAlertEvent.createMany({
+      data: [
+        {
+          ticketSlaId,
+          metric,
+          type,
+        },
+      ],
+      skipDuplicates: true,
+    });
+
+    if (alert.count === 0 || !ticket.assignedToId) {
+      return;
+    }
+
+    const copy = slaAlertCopy(metric, type, ticket.id);
+    await this.notificationService.create(
+      {
+        organizationId: ticket.organizationId,
+        userId: ticket.assignedToId,
+        type,
+        title: copy.title,
+        message: copy.message,
+        entityType: "ticket",
+        entityId: ticket.id,
+      },
+      tx,
+    );
   }
 
   async startPause(
@@ -278,8 +372,6 @@ export class SlaService {
     });
   }
 
-
-
   async evaluateDueTicketSlas(): Promise<number> {
     let lastId: string | undefined;
     let processed = 0;
@@ -340,6 +432,4 @@ export class SlaService {
 
     return processed;
   }
-
-
 }

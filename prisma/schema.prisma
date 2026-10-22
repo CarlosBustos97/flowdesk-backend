@@ -119,6 +119,16 @@ enum CustomerStatus {
   INACTIVE
 }
 
+enum Metric {
+  FIRST_RESPONSE
+  RESOLUTION
+}
+
+enum MetricType {
+  SLA_WARNING
+  SLA_BREACHED
+}
+
 model Organization {
   id       String             @id @default(uuid()) @db.Uuid
   name     String             @db.VarChar(150)
@@ -379,6 +389,7 @@ model TicketSla {
   slaPolicy SlaPolicy @relation(fields: [slaPolicyId], references: [id], onDelete: Restrict)
 
   ticketSlaPauses TicketSlaPause[]
+  SlaAlertEvent SlaAlertEvent[]
 
   @@index([slaPolicyId])
   @@index([firstResponseStatus])
@@ -879,4 +890,18 @@ model SlaHoliday {
   @@unique([slaCalendarId, date])
   @@index([slaCalendarId])
   @@map("sla_holidays")
+}
+
+model SlaAlertEvent {
+  id              String @id @default(uuid()) @db.Uuid
+  ticketSlaId     String @db.Uuid
+  metric          Metric
+  type            MetricType
+  createdAt       DateTime @default(now())
+
+  ticketSla TicketSla @relation(fields: [ticketSlaId], references: [id], onDelete: Cascade)
+
+  @@unique([ticketSlaId, metric, type])
+  @@index([ticketSlaId])
+  @@map("sla_alert_events")
 }

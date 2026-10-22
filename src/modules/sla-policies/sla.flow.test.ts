@@ -124,8 +124,11 @@ function createFlow() {
     },
   };
 
-  let createdTicket: { slaPolicyId?: string; slaDueAt?: Date; openedAt?: Date } =
-    {};
+  let createdTicket: {
+    slaPolicyId?: string;
+    slaDueAt?: Date;
+    openedAt?: Date;
+  } = {};
   let createdTicketSla: {
     slaPolicyId?: string;
     firstResponseDueAt?: Date;
@@ -199,7 +202,8 @@ function createFlow() {
         slaUpdate = args.data;
         slaUpdateCount += 1;
         Object.assign(ticketSla, args.data);
-        ticket.firstResponseAt = args.data.firstResponseAt ?? ticket.firstResponseAt;
+        ticket.firstResponseAt =
+          args.data.firstResponseAt ?? ticket.firstResponseAt;
         return { count: 1 };
       },
     },
@@ -234,6 +238,9 @@ function createFlow() {
     },
     ticketStatusHistory: {
       create: async () => ({ id: "history-1" }),
+    },
+    slaAlertEvent: {
+      createMany: async () => ({ count: 1 }),
     },
     comment: {
       create: async (args: {

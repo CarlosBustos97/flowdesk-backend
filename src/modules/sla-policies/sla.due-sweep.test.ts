@@ -1,9 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  SlaStatus,
-  TicketStatus,
-  type PrismaClient,
-} from "@prisma/client";
+import { SlaStatus, TicketStatus, type PrismaClient } from "@prisma/client";
 import type { SlaBusinessHourForCalculation } from "./sla-business-hours.calculator.js";
 import { SlaService } from "./sla.service.js";
 import { SlaSweepError } from "./sla-sweep.error.js";
@@ -135,6 +131,11 @@ function createSweep(rows: StoredSla[]) {
         return { ticketId: args.where.ticketId };
       },
     },
+    slaAlertEvent: {
+      createMany: async () => ({ count: 1 }),
+    },
+    $transaction: async (callback: (tx: unknown) => Promise<unknown>) =>
+      callback(prisma),
   };
 
   return {
@@ -192,6 +193,11 @@ function createDirectEvaluation(options: {
         return ticketSla;
       },
     },
+    slaAlertEvent: {
+      createMany: async () => ({ count: 1 }),
+    },
+    $transaction: async (callback: (tx: unknown) => Promise<unknown>) =>
+      callback(prisma),
   };
 
   return {
@@ -353,9 +359,7 @@ describe("evaluateDueTicketSlas y evaluateTicketSla", () => {
     });
     expect(sweep.pageSizes).toEqual([100, 100, 5]);
     expect(processed).toBe(205);
-    expect(sweep.evaluated).toEqual(
-      eligible.map((row) => row.ticketId),
-    );
+    expect(sweep.evaluated).toEqual(eligible.map((row) => row.ticketId));
     expect(new Set(sweep.evaluated).size).toBe(205);
     expect(sweep.evaluated).not.toContain("ticket-closed");
     expect(sweep.evaluated).not.toContain("ticket-done");

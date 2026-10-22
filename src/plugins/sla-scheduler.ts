@@ -1,10 +1,14 @@
 import fp from "fastify-plugin";
+import { NotificationService } from "../modules/notifications/notification.service.js";
 import { SlaService } from "../modules/sla-policies/sla.service.js";
 
 const SLA_INTERVAL_MS = 60_000;
 
 export default fp(async (app) => {
-    const slaService = new SlaService(app.prisma);
+    const slaService = new SlaService(
+        app.prisma,
+        new NotificationService(app.prisma),
+    );
 
     let isRunning = false;
     let activeEvaluation: Promise<void> | undefined;
