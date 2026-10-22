@@ -4,7 +4,11 @@ import type { MultipartFile } from "@fastify/multipart";
 import type AuthorizationService from "../auth/authorization.service.js";
 import { AUTH_SCOPES } from "../../common/auth/auth-scope.js";
 import { AppError } from "../../common/errors/app-error.js";
-import { isAllowedMimeType } from "./attachment.constants.js";
+import {
+  extensionForUpload,
+  isAllowedMimeType,
+  safeOriginalName,
+} from "./attachment.constants.js";
 import { LocalStorage } from "./storage/file-storage.js";
 
 export class AttachmentService {
@@ -43,10 +47,11 @@ export class AttachmentService {
     }
 
     const storage = new LocalStorage("storage/attachments");
+    const originalName = safeOriginalName(file.filename);
 
     const { fileName, storagePath } = await storage.save(
       file.file,
-      file.filename,
+      extensionForUpload(file.mimetype, originalName),
     );
 
     if (file.file.truncated) {
@@ -64,7 +69,7 @@ export class AttachmentService {
           ticketId: ticket.id,
           userId: requesterUserId,
           fileName,
-          originalName: file.filename,
+          originalName,
           mimeType: file.mimetype,
           fileSize,
           storagePath,

@@ -17,7 +17,7 @@ Redis no se toca. Sigue siendo el `ping` de `GET /health/ready`. No se reabren l
 - [x] **Fase 15.** Rango en el PATCH de usuario. Completada. Reporte: [implementations/fase-15-rango-patch-usuario.md](../implementations/fase-15-rango-patch-usuario.md).
 - [x] **Fase 16.** Mismo 401 en el login y en la sesión. Completada. Reporte: [implementations/fase-16-login-401.md](../implementations/fase-16-login-401.md).
 - [x] **Fase 17.** Helmet y límite del login. Completada. Reporte: [implementations/fase-17-helmet-limite-login.md](../implementations/fase-17-helmet-limite-login.md).
-- [ ] **Fase 18.** Extensión del adjunto.
+- [x] **Fase 18.** Extensión del adjunto. Completada. Reporte: [implementations/fase-18-extension-adjunto.md](../implementations/fase-18-extension-adjunto.md).
 
 ## Qué se revisó
 
@@ -55,6 +55,6 @@ Helmet con `contentSecurityPolicy: false`. `@fastify/rate-limit` solo en memoria
 
 ## Fase 18. Extensión del adjunto
 
-**Estado:** pendiente.
+**Estado:** completada. Reporte: [implementations/fase-18-extension-adjunto.md](../implementations/fase-18-extension-adjunto.md).
 
 La extensión guardada sale del MIME permitido: pdf, jpg o jpeg, png, txt. `originalName` es el nombre base, recortado a 255. Un PNG llamado `evil.html` se guarda con extensión de imagen. Un MIME fuera de la lista sigue en 400.

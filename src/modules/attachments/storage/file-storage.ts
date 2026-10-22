@@ -2,7 +2,7 @@ import { mkdir, unlink } from "node:fs/promises";
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
 import { randomUUID } from "node:crypto";
-import { extname, join } from "node:path";
+import { join } from "node:path";
 
 export class LocalStorage {
   constructor(private readonly basePath: string) {}
@@ -11,22 +11,16 @@ export class LocalStorage {
     await mkdir(this.basePath, { recursive: true });
   }
 
-  private generateFileName(originalName: string): string {
-    const extension = extname(originalName);
-
-    return `${randomUUID()}${extension}`;
-  }
-
   async save(
     stream: NodeJS.ReadableStream,
-    originalName: string,
+    extension: string,
   ): Promise<{
     fileName: string;
     storagePath: string;
   }> {
     await this.ensureDirectory();
 
-    const fileName = this.generateFileName(originalName);
+    const fileName = `${randomUUID()}${extension}`;
     const storagePath = join(this.basePath, fileName);
 
     await pipeline(stream, createWriteStream(storagePath));
