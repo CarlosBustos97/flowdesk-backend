@@ -20,6 +20,7 @@ import {
   commentUpdateSchema,
 } from "./comment.schema.js";
 import { NotificationService } from "../notifications/notification.service.js";
+import { AuditLogService } from "../audit-logs/audit-log.service.js";
 
 export async function commentRoutes(app: FastifyInstance) {
   const commentController = new CommentController(
@@ -27,6 +28,7 @@ export async function commentRoutes(app: FastifyInstance) {
       app.prisma,
       app.authorizationService,
       new NotificationService(app.prisma),
+      new AuditLogService(app.prisma, app.authorizationService),
     ),
   );
 

@@ -19,12 +19,14 @@ import {
 } from "../sla-policies/sla-policy.calculator.js";
 import { calculateElapsedWorkTime } from "../sla-policies/sla-business-hours.calculator.js";
 import type { NotificationService } from "../notifications/notification.service.js";
+import type { AuditLogService } from "../audit-logs/audit-log.service.js";
 
 export class CommentService {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly authorizationService: AuthorizationService,
     private readonly notificationService: NotificationService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   async create(
@@ -137,6 +139,21 @@ export class CommentService {
           },
         },
       });
+
+      await this.auditLogService.record(
+        {
+          organizationId: ticket.organizationId,
+          userId: requesterUserId,
+          action: "comment.created",
+          entityType: "comment",
+          entityId: createdComment.id,
+          newValues: {
+            ticketId: createdComment.ticketId,
+            isInternal: createdComment.isInternal,
+          },
+        },
+        tx,
+      );
 
       /**
        * 6. Enviar notificación a los usuarios que recibirán la notificación
@@ -444,24 +461,41 @@ export class CommentService {
       throw new AppError(403, "The user cannot delete this comment");
 
     /**
-     * 5. Eliminar el comentario
+     * 5. Borrar el comentario y dejar constancia en la misma transacción.
      */
-    const comment = await this.prisma.comment.update({
-      where: { id: commentId },
-      data: {
-        deletedAt: new Date(),
-      },
-      select: {
-        id: true,
-        ticketId: true,
-        userId: true,
-        content: true,
-        createdAt: true,
-        updatedAt: true,
-        user: {
-          select: { id: true, name: true, email: true },
+    const deletedAt = new Date();
+    const comment = await this.prisma.$transaction(async (tx) => {
+      const deletedComment = await tx.comment.update({
+        where: { id: commentId },
+        data: {
+          deletedAt,
         },
-      },
+        select: {
+          id: true,
+          ticketId: true,
+          userId: true,
+          content: true,
+          createdAt: true,
+          updatedAt: true,
+          user: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+      });
+
+      await this.auditLogService.record(
+        {
+          organizationId: existingComment.organizationId,
+          userId: requesterUserId,
+          action: "comment.deleted",
+          entityType: "comment",
+          entityId: deletedComment.id,
+          newValues: { deletedAt: deletedAt.toISOString() },
+        },
+        tx,
+      );
+
+      return deletedComment;
     });
 
     return comment;

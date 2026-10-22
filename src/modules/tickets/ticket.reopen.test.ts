@@ -60,6 +60,7 @@ describe("TicketService.reopen", () => {
         endPause: vi.fn(),
       } as never,
       { create: vi.fn() } as never,
+      { record: async () => ({ id: "audit-1" }) } as never,
     );
 
     await tickets.reopen("ticket-1", "user-1", "org-1");

@@ -11,11 +11,13 @@ import AuthorizationService from "../auth/authorization.service.js";
 import { AUTH_SCOPES } from "../../common/auth/auth-scope.js";
 import { AppError } from "../../common/errors/app-error.js";
 import bcrypt from "bcryptjs";
+import type { AuditLogService } from "../audit-logs/audit-log.service.js";
 
 export class UserService {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly authorizationService: AuthorizationService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   async list(query: UserListQuery, userId: string, organizationId: string) {
@@ -226,39 +228,60 @@ export class UserService {
     const passwordHash = await bcrypt.hash(data.password, 12);
 
     /*
-     * 8. Crear usuario y relación con el rol.
+     * 8. Crear usuario, su rol y el registro de auditoría.
      */
-    const user = await this.prisma.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        passwordHash,
-        organizationId,
+    const user = await this.prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          passwordHash,
+          organizationId,
 
-        roles: {
-          create: {
-            roleId: role.id,
+          roles: {
+            create: {
+              roleId: role.id,
+            },
           },
         },
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        status: true,
-        organizationId: true,
-        createdAt: true,
-        updatedAt: true,
-        roles: {
-          select: {
-            role: {
-              select: {
-                name: true,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          status: true,
+          organizationId: true,
+          createdAt: true,
+          updatedAt: true,
+          roles: {
+            select: {
+              role: {
+                select: {
+                  name: true,
+                },
               },
             },
           },
         },
-      },
+      });
+
+      await this.auditLogService.record(
+        {
+          organizationId: createdUser.organizationId,
+          userId: requesterUserId,
+          action: "user.created",
+          entityType: "user",
+          entityId: createdUser.id,
+          newValues: {
+            name: createdUser.name,
+            email: createdUser.email,
+            status: createdUser.status,
+            organizationId: createdUser.organizationId,
+          },
+        },
+        tx,
+      );
+
+      return createdUser;
     });
 
     return user;
@@ -412,6 +435,43 @@ export class UserService {
         });
       }
 
+      const oldValues: Record<string, string> = {};
+      const newValues: Record<string, string> = {};
+
+      if (data.name !== undefined && data.name !== existingUser.name) {
+        oldValues.name = existingUser.name;
+        newValues.name = data.name;
+      }
+
+      if (data.email !== undefined && data.email !== existingUser.email) {
+        oldValues.email = existingUser.email;
+        newValues.email = data.email;
+      }
+
+      if (data.status !== undefined && data.status !== existingUser.status) {
+        oldValues.status = existingUser.status;
+        newValues.status = data.status;
+      }
+
+      if (data.roleId !== undefined) {
+        newValues.roleId = data.roleId;
+      }
+
+      if (Object.keys(newValues).length > 0) {
+        await this.auditLogService.record(
+          {
+            organizationId: existingUser.organizationId,
+            userId: requesterUserId,
+            action: "user.updated",
+            entityType: "user",
+            entityId: existingUser.id,
+            ...(Object.keys(oldValues).length > 0 ? { oldValues } : {}),
+            newValues,
+          },
+          tx,
+        );
+      }
+
       return updatedUser;
     });
 
@@ -513,6 +573,19 @@ export class UserService {
           userId: existingUser.id,
         },
       });
+
+      await this.auditLogService.record(
+        {
+          organizationId: existingUser.organizationId,
+          userId: requesterUserId,
+          action: "user.disabled",
+          entityType: "user",
+          entityId: existingUser.id,
+          oldValues: { status: existingUser.status },
+          newValues: { status: UserStatus.INACTIVE },
+        },
+        tx,
+      );
 
       return updatedUser;
     });

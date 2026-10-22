@@ -13,6 +13,7 @@ import { authGuard } from "../auth/auth.guard.js";
 
 import { requirePermission } from "../../common/guards/permission.guard.js";
 import { PERMISSIONS } from "../../common/auth/permissions.js";
+import { AuditLogService } from "../audit-logs/audit-log.service.js";
 import type {
   UserCreateBody,
   UserListQuery,
@@ -23,7 +24,11 @@ import type {
 
 export async function userRoutes(app: FastifyInstance) {
   const userController = new UserController(
-    new UserService(app.prisma, app.authorizationService),
+    new UserService(
+      app.prisma,
+      app.authorizationService,
+      new AuditLogService(app.prisma, app.authorizationService),
+    ),
   );
 
   app.get<{ Querystring: UserListQuery }>(

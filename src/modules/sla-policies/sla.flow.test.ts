@@ -9,6 +9,7 @@ import type AuthorizationService from "../auth/authorization.service.js";
 import { AppError } from "../../common/errors/app-error.js";
 import { CommentService } from "../comments/comment.service.js";
 import type { NotificationService } from "../notifications/notification.service.js";
+import type { AuditLogService } from "../audit-logs/audit-log.service.js";
 import { TicketService } from "../tickets/ticket.service.js";
 import { SlaService } from "./sla.service.js";
 import type { SlaBusinessHourForCalculation } from "./sla-business-hours.calculator.js";
@@ -276,16 +277,21 @@ function createFlow() {
   const notificationService = {
     create: async () => ({ id: "notification-1" }),
   } as unknown as NotificationService;
+  const auditLogService = {
+    record: async () => ({ id: "audit-1" }),
+  } as unknown as AuditLogService;
   const ticketService = new TicketService(
     prisma,
     authorization,
     slaService,
     notificationService,
+    auditLogService,
   );
   const commentService = new CommentService(
     prisma,
     authorization,
     notificationService,
+    auditLogService,
   );
 
   return {

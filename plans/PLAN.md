@@ -29,7 +29,7 @@ Fuera de este cierre: tasks, correo, invitaciones, reset de contraseña, prefere
 
 - [x] **Fase 0.** Seguridad e integridad. Completada.
 - [x] **Fase 1.** Dejar Vitest en verde (prueba del scheduler). Completada.
-- [ ] **Fase 2.** Audit log.
+- [x] **Fase 2.** Audit log. Completada.
 - [ ] **Fase 3.** Workflows mínimos.
 - [ ] **Fase 4.** Informes por consulta, sin cola.
 - [ ] **Fase 5.** API keys.
@@ -113,7 +113,7 @@ A mano, con la API levantada (`docker compose up -d`, migraciones, seed y `npm r
 
 ## Fase 2. Audit log
 
-**Estado:** pendiente.
+**Estado:** completada. Reporte: [implementations/fase-2-audit-log.md](../implementations/fase-2-audit-log.md).
 
 **Prioridad:** P1.
 

@@ -45,7 +45,9 @@ function service() {
 
   return {
     deletedSessionUserIds,
-    users: new UserService(prisma as never, authorization as never),
+    users: new UserService(prisma as never, authorization as never, {
+      record: async () => ({ id: "audit-1" }),
+    } as never),
   };
 }
 

@@ -60,6 +60,7 @@ export const PERMISSIONS = {
   NOTIFICATIONS_MARK_AS_READ: "notifications.mark-as-read",
   NOTIFICATIONS_MARK_ALL_AS_READ: "notifications.mark-all-as-read",
 
+  AUDIT_LOGS_VIEW: "audit_logs.view",
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

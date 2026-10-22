@@ -325,6 +325,12 @@ const PERMISSIONS = [
     description: "Mark all notifications as read",
     module: "notifications",
   },
+  {
+    code: "audit_logs.view",
+    name: "View audit logs",
+    description: "View audit logs",
+    module: "audit",
+  },
 ];
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -371,6 +377,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "notifications.count-unread",
     "notifications.mark-as-read",
     "notifications.mark-all-as-read",
+    "audit_logs.view",
   ],
 
   MANAGER: [
@@ -406,6 +413,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "notifications.count-unread",
     "notifications.mark-as-read",
     "notifications.mark-all-as-read",
+    "audit_logs.view",
   ],
 
   AGENT: [

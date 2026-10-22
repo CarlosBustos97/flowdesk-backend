@@ -19,6 +19,7 @@ import { AppError } from "../../common/errors/app-error.js";
 import { calculateSlaDueDates } from "../sla-policies/sla-policy.calculator.js";
 import type { SlaService } from "../sla-policies/sla.service.js";
 import type { NotificationService } from "../notifications/notification.service.js";
+import type { AuditLogService } from "../audit-logs/audit-log.service.js";
 type TicketStatusAction = "start" | "pending" | "resolve" | "close" | "reopen";
 type UpdatedTicket = {
   id: string;
@@ -32,6 +33,7 @@ export class TicketService {
     private readonly authorizationService: AuthorizationService,
     private readonly slaService: SlaService,
     private readonly notificationService: NotificationService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   async list(
@@ -358,6 +360,26 @@ export class TicketService {
         },
       });
 
+      await this.auditLogService.record(
+        {
+          organizationId: organization.id,
+          userId: requesterUserId,
+          action: "ticket.created",
+          entityType: "ticket",
+          entityId: ticketCreated.id,
+          newValues: {
+            subject: ticketCreated.subject,
+            status: ticketCreated.status,
+            priority: ticketCreated.priority,
+            customerId: customer.id,
+            ...(data.assignedToId !== undefined
+              ? { assignedToId: data.assignedToId }
+              : {}),
+          },
+        },
+        tx,
+      );
+
       return ticketCreated;
     });
 
@@ -566,6 +588,79 @@ export class TicketService {
             message: `El ticket ${ticket.subject} le ha sido asignado.`,
             entityType: "ticket",
             entityId: ticket.id,
+          },
+          tx,
+        );
+      }
+
+      if (
+        data.assignedToId !== undefined &&
+        data.assignedToId !== existingTicket.assignedToId
+      ) {
+        await this.auditLogService.record(
+          {
+            organizationId: existingTicket.organizationId,
+            userId: requesterUserId,
+            action: "ticket.assigned",
+            entityType: "ticket",
+            entityId: ticket.id,
+            oldValues: { assignedToId: existingTicket.assignedToId },
+            newValues: { assignedToId: data.assignedToId },
+          },
+          tx,
+        );
+      }
+
+      const oldValues: Record<string, string | null> = {};
+      const newValues: Record<string, string | null> = {};
+
+      if (
+        data.customerId !== undefined &&
+        data.customerId !== existingTicket.customerId
+      ) {
+        oldValues.customerId = existingTicket.customerId;
+        newValues.customerId = data.customerId;
+      }
+
+      if (data.subject !== undefined && data.subject !== existingTicket.subject) {
+        oldValues.subject = existingTicket.subject;
+        newValues.subject = data.subject;
+      }
+
+      if (
+        data.description !== undefined &&
+        data.description !== existingTicket.description
+      ) {
+        oldValues.description = existingTicket.description;
+        newValues.description = data.description;
+      }
+
+      if (
+        data.projectId !== undefined &&
+        data.projectId !== existingTicket.projectId
+      ) {
+        oldValues.projectId = existingTicket.projectId;
+        newValues.projectId = data.projectId;
+      }
+
+      if (
+        data.categoryId !== undefined &&
+        data.categoryId !== existingTicket.categoryId
+      ) {
+        oldValues.categoryId = existingTicket.categoryId;
+        newValues.categoryId = data.categoryId;
+      }
+
+      if (Object.keys(newValues).length > 0) {
+        await this.auditLogService.record(
+          {
+            organizationId: existingTicket.organizationId,
+            userId: requesterUserId,
+            action: "ticket.updated",
+            entityType: "ticket",
+            entityId: ticket.id,
+            oldValues,
+            newValues,
           },
           tx,
         );
@@ -790,6 +885,19 @@ export class TicketService {
           data: { resolvedAt: null },
         });
       }
+
+      await this.auditLogService.record(
+        {
+          organizationId: existingTicket.organizationId,
+          userId: requesterUserId,
+          action: "ticket.status_changed",
+          entityType: "ticket",
+          entityId: existingTicket.id,
+          oldValues: { status: existingTicket.status },
+          newValues: { status },
+        },
+        tx,
+      );
 
       await tx.ticketStatusHistory.create({
         data: {
