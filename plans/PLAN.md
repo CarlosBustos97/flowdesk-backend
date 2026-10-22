@@ -31,7 +31,7 @@ Fuera de este cierre: tasks, correo, invitaciones, reset de contraseña, prefere
 - [x] **Fase 1.** Dejar Vitest en verde (prueba del scheduler). Completada.
 - [x] **Fase 2.** Audit log. Completada.
 - [x] **Fase 3.** Workflows mínimos. Completada.
-- [ ] **Fase 4.** Informes por consulta, sin cola.
+- [x] **Fase 4.** Informes por consulta, sin cola. Completada.
 - [ ] **Fase 5.** API keys.
 - [ ] **Fase 6.** Revisión integral y concurrencia del SLA.
 - [ ] **Fase 7.** ESLint y CI.
@@ -169,7 +169,7 @@ A mano: cambia el nombre de un usuario y `GET /audit-logs` con su token. Debe sa
 
 ## Fase 4. Informes
 
-**Estado:** pendiente. Puede hacerse después de la fase 0, sin esperar a workflows. En la práctica va cuando se pida, siguiendo este orden.
+**Estado:** completada. Reporte: [implementations/fase-4-informes.md](../implementations/fase-4-informes.md).
 
 **Objetivo.** `GET /reports/tickets-summary`: tickets no cerrados por estado y por prioridad, y SLA de resolución en `AT_RISK` o `BREACHED`, solo de la organización del solicitante.
 

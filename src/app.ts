@@ -21,6 +21,7 @@ import { slaHolidayRoutes } from "./modules/sla-calendars/holidays/sla-holiday.r
 import { notificationRoutes } from "./modules/notifications/notification.routes.js";
 import { auditLogRoutes } from "./modules/audit-logs/audit-log.routes.js";
 import { workflowRoutes } from "./modules/workflows/workflow.routes.js";
+import { reportRoutes } from "./modules/reports/report.routes.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -53,6 +54,7 @@ export async function buildApp() {
   await app.register(notificationRoutes);
   await app.register(auditLogRoutes);
   await app.register(workflowRoutes);
+  await app.register(reportRoutes);
 
   return app;
 }

@@ -355,6 +355,12 @@ const PERMISSIONS = [
     description: "Deactivate workflows",
     module: "workflows",
   },
+  {
+    code: "reports.view",
+    name: "View reports",
+    description: "View ticket summary reports",
+    module: "reports",
+  },
 ];
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -406,6 +412,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "workflows.create",
     "workflows.update",
     "workflows.delete",
+    "reports.view",
   ],
 
   MANAGER: [
@@ -446,6 +453,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "workflows.create",
     "workflows.update",
     "workflows.delete",
+    "reports.view",
   ],
 
   AGENT: [
