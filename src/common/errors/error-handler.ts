@@ -31,6 +31,19 @@ export function registerErrorHandler(app: FastifyInstance) {
         });
       }
 
+      if (
+        typeof error.statusCode === "number" &&
+        error.statusCode >= 400 &&
+        error.statusCode < 500
+      ) {
+        return reply.status(error.statusCode).send({
+          success: false,
+          error: {
+            message: error.message,
+          },
+        });
+      }
+
       // Errores inesperados
       app.log.error(error);
 

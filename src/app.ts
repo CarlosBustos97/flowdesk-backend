@@ -1,4 +1,6 @@
 import Fastify from "fastify";
+import helmet from "@fastify/helmet";
+import rateLimit from "@fastify/rate-limit";
 import prisma from "./plugins/prisma.js";
 import redis from "./plugins/redis.js";
 import { healthRoutes } from "./modules/health/health.routes.js";
@@ -31,6 +33,14 @@ export async function buildApp() {
   });
 
   registerErrorHandler(app);
+
+  await app.register(helmet, {
+    contentSecurityPolicy: false,
+  });
+
+  await app.register(rateLimit, {
+    global: false,
+  });
 
   app.addHook("onRequest", (_request, _reply, done) => {
     requestScope.run({ organizationBound: false }, done);

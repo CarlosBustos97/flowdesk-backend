@@ -16,7 +16,7 @@ Redis no se toca. Sigue siendo el `ping` de `GET /health/ready`. No se reabren l
 
 - [x] **Fase 15.** Rango en el PATCH de usuario. Completada. Reporte: [implementations/fase-15-rango-patch-usuario.md](../implementations/fase-15-rango-patch-usuario.md).
 - [x] **Fase 16.** Mismo 401 en el login y en la sesión. Completada. Reporte: [implementations/fase-16-login-401.md](../implementations/fase-16-login-401.md).
-- [ ] **Fase 17.** Helmet y límite del login.
+- [x] **Fase 17.** Helmet y límite del login. Completada. Reporte: [implementations/fase-17-helmet-limite-login.md](../implementations/fase-17-helmet-limite-login.md).
 - [ ] **Fase 18.** Extensión del adjunto.
 
 ## Qué se revisó
@@ -47,7 +47,7 @@ Si falta la organización o el usuario, `login` ejecuta `bcrypt.compare` contra 
 
 ## Fase 17. Helmet y límite del login
 
-**Estado:** pendiente.
+**Estado:** completada. Reporte: [implementations/fase-17-helmet-limite-login.md](../implementations/fase-17-helmet-limite-login.md).
 
 Helmet con `contentSecurityPolicy: false`. `@fastify/rate-limit` solo en memoria y solo en `POST /auth/login`: 10 peticiones por minuto por IP. Sin Redis.
 

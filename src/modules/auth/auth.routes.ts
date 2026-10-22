@@ -11,7 +11,15 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.post(
     "/auth/login",
-    { schema: loginSchema },
+    {
+      schema: loginSchema,
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: "1 minute",
+        },
+      },
+    },
     authController.login.bind(authController),
   );
 
