@@ -2,12 +2,15 @@ import type { PrismaClient, Role } from "@prisma/client";
 
 import type { PermissionCode } from "../../common/auth/permissions.js";
 import { AUTH_SCOPES, type AuthScope } from "../../common/auth/auth-scope.js";
+import { isOrganizationBound } from "../../common/auth/request-scope.js";
 import { AppError } from "../../common/errors/app-error.js";
 
 export default class AuthorizationService {
   constructor(private readonly prisma: PrismaClient) {}
 
   async getScope(userId: string): Promise<AuthScope> {
+    if (isOrganizationBound()) return AUTH_SCOPES.ORGANIZATION;
+
     const user = await this.prisma.user.findUnique({
       where: {
         id: userId,

@@ -34,6 +34,10 @@ export class AuthController {
   }
 
   async logout(request: FastifyRequest, reply: FastifyReply) {
+    if (!request.auth.sessionId) {
+      throw new AppError(401, "Invalid or expired session");
+    }
+
     await this.authService.logout(request.auth.sessionId);
 
     return reply.send({

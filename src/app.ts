@@ -5,6 +5,7 @@ import { healthRoutes } from "./modules/health/health.routes.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import swagger from "./plugins/swagger.js";
 import { registerErrorHandler } from "./common/errors/error-handler.js";
+import { requestScope } from "./common/auth/request-scope.js";
 import authorization from "./plugins/authorization.js";
 import { userRoutes } from "./modules/users/user.routes.js";
 import { customerRoutes } from "./modules/customers/customer.routes.js";
@@ -22,6 +23,7 @@ import { notificationRoutes } from "./modules/notifications/notification.routes.
 import { auditLogRoutes } from "./modules/audit-logs/audit-log.routes.js";
 import { workflowRoutes } from "./modules/workflows/workflow.routes.js";
 import { reportRoutes } from "./modules/reports/report.routes.js";
+import { apiKeyRoutes } from "./modules/api-keys/api-key.routes.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -29,6 +31,10 @@ export async function buildApp() {
   });
 
   registerErrorHandler(app);
+
+  app.addHook("onRequest", (_request, _reply, done) => {
+    requestScope.run({ organizationBound: false }, done);
+  });
 
   // Pulgins
   await app.register(prisma);
@@ -55,6 +61,7 @@ export async function buildApp() {
   await app.register(auditLogRoutes);
   await app.register(workflowRoutes);
   await app.register(reportRoutes);
+  await app.register(apiKeyRoutes);
 
   return app;
 }

@@ -17,7 +17,9 @@ declare module "fastify" {
       email: string;
     };
     auth: {
-      sessionId: string;
+      sessionId?: string;
+      apiKeyId?: string;
+      scopes?: string[];
     };
   }
 }

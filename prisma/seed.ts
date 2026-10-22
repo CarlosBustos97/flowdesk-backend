@@ -361,6 +361,24 @@ const PERMISSIONS = [
     description: "View ticket summary reports",
     module: "reports",
   },
+  {
+    code: "api_keys.view",
+    name: "View API keys",
+    description: "View API keys",
+    module: "api_keys",
+  },
+  {
+    code: "api_keys.create",
+    name: "Create API keys",
+    description: "Create API keys",
+    module: "api_keys",
+  },
+  {
+    code: "api_keys.revoke",
+    name: "Revoke API keys",
+    description: "Revoke API keys",
+    module: "api_keys",
+  },
 ];
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -413,6 +431,9 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "workflows.update",
     "workflows.delete",
     "reports.view",
+    "api_keys.view",
+    "api_keys.create",
+    "api_keys.revoke",
   ],
 
   MANAGER: [
@@ -454,6 +475,9 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "workflows.update",
     "workflows.delete",
     "reports.view",
+    "api_keys.view",
+    "api_keys.create",
+    "api_keys.revoke",
   ],
 
   AGENT: [

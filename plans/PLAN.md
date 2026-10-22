@@ -32,7 +32,7 @@ Fuera de este cierre: tasks, correo, invitaciones, reset de contraseña, prefere
 - [x] **Fase 2.** Audit log. Completada.
 - [x] **Fase 3.** Workflows mínimos. Completada.
 - [x] **Fase 4.** Informes por consulta, sin cola. Completada.
-- [ ] **Fase 5.** API keys.
+- [x] **Fase 5.** API keys. Completada.
 - [ ] **Fase 6.** Revisión integral y concurrencia del SLA.
 - [ ] **Fase 7.** ESLint y CI.
 - [ ] **Fase 8.** README y arranque local.
@@ -183,7 +183,7 @@ A mano: cambia el nombre de un usuario y `GET /audit-logs` con su token. Debe sa
 
 ## Fase 5. API keys
 
-**Estado:** pendiente. Depende del audit log para registrar alta y revocación.
+**Estado:** completada. Reporte: [implementations/fase-5-api-keys.md](../implementations/fase-5-api-keys.md).
 
 **Objetivo.** Crear una clave, verla completa una sola vez, y llamar a la API con `X-Api-Key`, limitada a unos permisos y a su organización.
 

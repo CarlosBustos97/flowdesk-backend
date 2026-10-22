@@ -68,6 +68,10 @@ export const PERMISSIONS = {
   WORKFLOWS_DELETE: "workflows.delete",
 
   REPORTS_VIEW: "reports.view",
+
+  API_KEYS_VIEW: "api_keys.view",
+  API_KEYS_CREATE: "api_keys.create",
+  API_KEYS_REVOKE: "api_keys.revoke",
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

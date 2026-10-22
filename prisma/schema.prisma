@@ -719,7 +719,7 @@ model ApiKey {
   organizationId String    @db.Uuid
   name           String    @db.VarChar(100)
   keyPrefix      String    @db.VarChar(20)
-  keyHash        String    @db.VarChar(255)
+  keyHash        String    @unique @db.VarChar(255)
   scopes         Json?
   expiresAt      DateTime?
   lastUsedAt     DateTime?
