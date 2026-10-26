@@ -1,6 +1,6 @@
 # FlowDesk Backend
 
-API para tickets de soporte: SLA en horario laboral, workflows, audit log, un informe de tickets y API keys.
+Backend del portafolio personal de Carlos Bustos ([carlosbustos97.github.io](https://carlosbustos97.github.io/)). API de tickets de soporte: SLA en horario laboral, workflows, audit log, un informe de tickets y API keys.
 
 Comprobado con Node v21.5.0. Las dependencias ya estaban en `node_modules`; no se ha vuelto a ejecutar `npm install`.
 
@@ -54,7 +54,7 @@ El login comprobado fue `POST /auth/login` con `organizationSlug` `acme-corporat
 ## Qué no incluye este repo
 
 - No hay Dockerfile de la API ni una elección de hosting. Compose solo levanta Postgres y Redis.
-- No hay workflow de GitHub: el repo no tiene remoto.
+- No hay workflow de GitHub.
 - Redis solo responde al `ping` de `/health/ready`. No hay cola. `ReportJob` no se usa; el informe es `GET /reports/tickets-summary`.
 - No hay módulos HTTP de tasks, correo, invitaciones, reset de contraseña ni preferencias de notificación. Esas tablas siguen en el esquema.
 - No hay rate limit. `@fastify/helmet` está en las dependencias y no está registrado.
